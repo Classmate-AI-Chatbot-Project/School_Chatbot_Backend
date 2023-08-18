@@ -1,0 +1,13 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+### Django .gitignore ###
+*.log
+*.pot
+*.pyc
+migrations/
+__pycache__/
+my_settings.py
+db.sqlite3
+db.sqlite3-journal
+media
+# chat/kogpt2_model/

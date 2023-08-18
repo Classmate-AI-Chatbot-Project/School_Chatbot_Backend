@@ -1,0 +1,3 @@
+# venv/pyvenv.cfg
+*.pyc
+cloud-sql-proxy.exe
