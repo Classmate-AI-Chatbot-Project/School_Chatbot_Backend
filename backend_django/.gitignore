@@ -6,7 +6,7 @@
 *.pyc
 migrations/
 __pycache__/
-my_settings.py
+# my_settings.py
 db.sqlite3
 db.sqlite3-journal
 media
