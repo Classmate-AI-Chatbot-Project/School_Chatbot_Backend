@@ -1,4 +1,5 @@
 # chat/views.py
+from django.db.models import Avg
 from rest_framework import status
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -9,6 +10,7 @@ from .kobart import generate_summary
 from .wordcloud import get_wordcloud_data
 from django.contrib.auth.decorators import login_required   # 함수형 뷰에만 적용 가능
 from .models import ChatRoom, ChatMessage, AllDialogue, ConsultResult   # 모델 임포트
+from account.models import User
 
 '''
 # 메인 페이지 [상담하러 가기] 버튼, 그림 심리 테스트 [챗봇과 상담하기] 버튼, 
@@ -125,7 +127,8 @@ def chat_result(request, user_id, chatroom_id):
         
         if request.method == 'POST':
             # Payload 받아오기
-            data = json.loads(request.body)
+            payload = json.loads(request.body.decode('utf-8'))
+            data = payload.get('data')
             depression_count = data.get('depression_count')
             emotion_count = data.get('emotion_count')
             summary = data.get('summary')
@@ -142,6 +145,13 @@ def chat_result(request, user_id, chatroom_id):
                 want_consult = True,
                 chat_id = chat_room,     
             )
+
+            consultResult = ConsultResult.objects.filter(member_id=user)
+            average_emotion_temp = consultResult.aggregate(Avg('emotion_temp'))['emotion_temp__avg']
+
+            user_instance = User.objects.get(id=user.id)
+            user_instance.avg_emotion = average_emotion_temp
+            user_instance.save()
 
             return HttpResponse(status=status.HTTP_200_OK)
 
