@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
-from . import my_settings
+#from . import my_settings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'transformers',
+    'konlpy',
 ]
 
 # Channels (Daphne) & Channel Layer (Redis)
@@ -246,10 +248,10 @@ USE_TZ = False
 
 STATIC_URL = 'static/'
 STATIC_ROOT = 'static'
-STATICFILES_DIRS = [    # React의 static 파일 가져오기
-    # os.path.join(BASE_DIR, 'frontend', 'schoollog-react-app', 'build', 'static')
-    'C:/SchoolLog_backend/frontend/schoollog-react-app/build/static'
-]
+# STATICFILES_DIRS = [    # React의 static 파일 가져오기
+#     # os.path.join(BASE_DIR, 'frontend', 'schoollog-react-app', 'build', 'static')
+#     'C:/SchoolLog_backend/frontend/schoollog-react-app/build/static'
+# ]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = 'media'
