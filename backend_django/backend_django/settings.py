@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'chat',             # 챗봇 채팅 앱
     'consult',          # 상담(쪽지) 앱
     'account',          # 로그인/회원가입
+    'teacher',
     'rest_framework',   # restframework
     'corsheaders',      # CORS 허용 (React와 연동)
     'django.contrib.admin',
