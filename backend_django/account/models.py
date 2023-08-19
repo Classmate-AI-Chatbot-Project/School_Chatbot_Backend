@@ -42,6 +42,7 @@ class User(AbstractBaseUser):
     job              = models.IntegerField(choices=((0, '선생님'), (1, '학생')), null=True)
     profile_photo    = models.ImageField(null=True)
     password         = models.CharField(max_length=200, default='')
+    avg_emotion      = models.IntegerField(null=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
