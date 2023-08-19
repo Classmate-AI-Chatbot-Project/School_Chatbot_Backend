@@ -6,7 +6,6 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import UserSerializer
 from rest_framework.permissions import IsAuthenticated
-from .models import User
 from account.models import User
 import requests, jwt
 from backend_django.settings  import SECRET_KEY
