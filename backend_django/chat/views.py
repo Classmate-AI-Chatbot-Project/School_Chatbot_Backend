@@ -100,7 +100,7 @@ def chat_result(request, user_id, chatroom_id):
                      student_dialogs.append(content)
 
             # KoBERT 이용하여 감정, 우울도 json 가져오기
-            category_count, emotion_count, depression_count = kobert_result(student_dialogs)
+            emotion_count, depression_count = kobert_result(student_dialogs)
             wordcloud = get_wordcloud_data(student_dialogs)
 
             # KeyWord로 WordCloud 이미지 저장하기
@@ -114,7 +114,6 @@ def chat_result(request, user_id, chatroom_id):
 
             # JSON으로 만들어서 클라이언트에게 전송
             context_data = {
-                'category_count': category_count,
                 'emotion_count': emotion_count,
                 'depression_count': depression_count,
                 'wordcloud':image_path,

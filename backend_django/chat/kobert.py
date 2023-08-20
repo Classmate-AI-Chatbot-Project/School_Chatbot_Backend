@@ -80,25 +80,25 @@ class KoBERTforSequenceClassfication(BertPreTrainedModel):
 
 def load_wellness_answer():
     current_directory = os.path.dirname(__file__)
-    category_path = os.path.join(current_directory, 'data', 'category.txt')
+    # category_path = os.path.join(current_directory, 'data', 'category.txt')
     emotion_path = os.path.join(current_directory, 'data', 'emotion.txt')
     depression_path = os.path.join(current_directory, 'data', 'depression.txt')
 
-    c_f = open(category_path, 'r', encoding='UTF8')
+    # c_f = open(category_path, 'r', encoding='UTF8')
     e_f = open(emotion_path, 'r', encoding='UTF8')
     d_f = open(depression_path, 'r', encoding='UTF8')
 
-    category_lines = c_f.readlines()
+    # category_lines = c_f.readlines()
     emoiton_lines = e_f.readlines()
     depression_lines = d_f.readlines()
 
-    category = {}
+    # category = {}
     emotion = {}
     depression = {}
 
-    for line_num, line_data in enumerate(category_lines):
-        data = [item.strip() for item in line_data.split('    ')]
-        category[data[1]] = data[0]
+    # for line_num, line_data in enumerate(category_lines):
+    #     data = [item.strip() for item in line_data.split('    ')]
+    #     category[data[1]] = data[0]
 
     for line_num, line_data in enumerate(emoiton_lines):
         data = [item.strip() for item in line_data.split('    ')]
@@ -108,7 +108,7 @@ def load_wellness_answer():
         data = [item.strip() for item in line_data.split('	')]
         depression[data[0]] = data[1]
 
-    return category, emotion, depression
+    return emotion, depression
 
 
 def kobert_input(tokenizer, str, device=None, max_seq_len=512):
@@ -137,7 +137,7 @@ def kobert_result(student_dialogs):
     # save_ckpt_path = "./result_model/kobert/kobert.pth"
 
     # 답변과 카테고리 불러오기
-    category, emotion, depression = load_wellness_answer()
+    emotion, depression = load_wellness_answer()
 
     ctx = "cuda" if torch.cuda.is_available() else "cpu"
     device = torch.device(ctx)
@@ -153,7 +153,7 @@ def kobert_result(student_dialogs):
 
     tokenizer = get_tokenizer()
 
-    category_count = defaultdict(int)
+    # category_count = defaultdict(int)
     emotion_count = defaultdict(int)
     depression_count = defaultdict(int)
     total_count = 0
@@ -164,6 +164,7 @@ def kobert_result(student_dialogs):
     emotion_count['분노'] = 0
     emotion_count['후회'] = 0
     emotion_count['중립'] = 0
+    emotion_count['긍정'] = 0
 
     for dialogue in student_dialogs:
         data = kobert_input(tokenizer, dialogue, device, 512)
@@ -175,11 +176,11 @@ def kobert_result(student_dialogs):
 
         max_index = torch.argmax(softmax_logit).item()
 
-        category_list = category[str(max_index)].split('/')[-1]  # 마지막 카테고리 선택
+        # category_list = category[str(max_index)].split('/')[-1]  # 마지막 카테고리 선택
         emotion_list = emotion[str(max_index)]
         depression_list = depression[str(max_index)]
 
-        category_count[category_list] += 1
+        # category_count[category_list] += 1
         emotion_count[emotion_list] += 1
         depression_count[depression_list] += 1
         total_count += 1
@@ -193,4 +194,4 @@ def kobert_result(student_dialogs):
     depression_percentage = (depression_count['우울'] / total_count) * 100
 
 
-    return category_count, emotion_count, depression_percentage
+    return emotion_count, depression_percentage
