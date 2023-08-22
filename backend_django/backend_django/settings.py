@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
-from . import my_settings
+#from . import my_settings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'transformers',
+    'konlpy',
 ]
 
 # Channels (Daphne) & Channel Layer (Redis)
@@ -141,7 +143,9 @@ TEMPLATES = [
         # React의 index.html 있는 위치로 장고 템플릿 경로 변경
         'DIRS': [
             # os.path.join(BASE_DIR, 'frontend', 'schoollog-react-app', 'build'),
-            'C:/SchoolLog_backend/frontend/schoollog-react-app/build'
+            # 기존: 'C:/SchoolLog_backend/frontend/schoollog-react-app/build'
+            'C:/frontend-schoollog/School_Chatbot/frontend/schoollog-react-app/build'
+                # 프론트엔드의 build 경로는 각자 개인 로컬 경로로 변경
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -244,13 +248,17 @@ USE_TZ = False
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
-STATIC_ROOT = 'static'
-STATICFILES_DIRS = [    # React의 static 파일 가져오기
-    # os.path.join(BASE_DIR, 'frontend', 'schoollog-react-app', 'build', 'static')
-    'C:/SchoolLog_backend/frontend/schoollog-react-app/build/static'
-]
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # 정적 파일이 실제로 모일 디렉토리
 
+# 개발 환경에서 python manage.py collectstatic 명령을 실행할 때, 
+# STATICFILES_DIRS에 지정된 디렉토리의 정적 파일들이 STATIC_ROOT로 복사된다. 이렇게 하면 정적 파일들이 한 곳에 모인다.
+#'''
+STATICFILES_DIRS = [    # Django & React 추가적인 정적 파일 디렉토리의 경로 지정
+    os.path.join(BASE_DIR, 'static'),
+    'C:/frontend-schoollog/School_Chatbot/frontend/schoollog-react-app/build/static'
+]
+#'''
 MEDIA_URL = '/media/'
 MEDIA_ROOT = 'media'
 

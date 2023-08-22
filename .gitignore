@@ -1,4 +1,4 @@
-# venv/pyvenv.cfg
-venv/Lib/site-packages/torch/
+venv/pyvenv.cfg
+venv/
 *.pyc
 cloud-sql-proxy.exe
