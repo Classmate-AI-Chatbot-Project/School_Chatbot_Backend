@@ -1,12 +1,16 @@
 # chat/views.py
-
+from django.db.models import Avg
+from rest_framework import status
 from django.shortcuts import render
-from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
+from django.http import HttpResponse
+import json, os
 from .kogpt2_chatbot import kogpt2_answer
+from .kobert import kobert_result
+from .kobart import generate_summary
+from .wordcloud import get_wordcloud_data
 from django.contrib.auth.decorators import login_required   # 함수형 뷰에만 적용 가능
-from .models import User, ChatRoom, ChatMessage, AllDialogue   # 모델 임포트
+from .models import ChatRoom, ChatMessage, AllDialogue, ConsultResult   # 모델 임포트
+from account.models import User
 
 '''
 # 메인 페이지 [상담하러 가기] 버튼, 그림 심리 테스트 [챗봇과 상담하기] 버튼, 
@@ -56,7 +60,11 @@ def chat_service(request, user_id, chatroom_id):  # URL에 포함된 값을 전�
         else:   # '종료하기' 입력하면
             # 챗봇과 사용자의 저장된 발화들을 하나의 문자열로 연결하여 저장하기
             all_messages = ChatMessage.objects.filter(chat_id=chat_room).order_by('message_time')
-            combined_text = ' '.join([message.message_text for message in all_messages])
+            # combined_text = '\n'.join([message.message_text for message in all_messages])
+            combined_text = ''
+
+            for message in all_messages:
+                 combined_text = combined_text + message.sender + ":" + message.message_text + "\n"
 
             AllDialogue.objects.create(     
                 chat_id=chat_room,  
@@ -73,3 +81,78 @@ def chat_service(request, user_id, chatroom_id):  # URL에 포함된 값을 전�
             return HttpResponse(json.dumps(output), status=200)
     else:
         return render(request, 'chat/chat_test.html', context)
+
+# chat/result/<str:user_id>/<int:chatroom_id>/
+@login_required               
+def chat_result(request, user_id, chatroom_id):
+        user = request.user        
+        alldialogue = AllDialogue.objects.filter(chat_id=chatroom_id)
+        chat_room = ChatRoom.objects.get(chat_id=chatroom_id)
+        student_dialogs = []
+        combined_text = ''
+
+        if request.method == 'GET':
+            lines = alldialogue[0].dialogue_text.strip().split('\n')
+            for line in lines:
+                role, content = line.split(':', 1)
+                role = role.strip()
+                combined_text = combined_text + '\n' + content
+                content = content.strip()
+                if role == 'student':
+                     student_dialogs.append(content)
+
+            # KoBERT 이용하여 감정, 우울도 json 가져오기
+            category_count, emotion_count, depression_count = kobert_result(student_dialogs)
+            wordcloud = get_wordcloud_data(student_dialogs)
+
+            # KeyWord로 WordCloud 이미지 저장하기
+            media_path = os.path.join('media', 'wordcloud')
+            os.makedirs(media_path, exist_ok=True)
+            image_path = os.path.join(media_path, f'{chatroom_id}.png')
+            wordcloud.to_file(image_path)
+            
+            # 요약문 생성하기
+            summary = generate_summary(combined_text)
+
+            # JSON으로 만들어서 클라이언트에게 전송
+            context_data = {
+                'category_count': category_count,
+                'emotion_count': emotion_count,
+                'depression_count': depression_count,
+                'wordcloud':image_path,
+                'summary':summary,
+            }
+            data_json = json.dumps(context_data, ensure_ascii=False)
+            return HttpResponse(data_json)
+        
+        if request.method == 'POST':
+            # Payload 받아오기
+            payload = json.loads(request.body.decode('utf-8'))
+            data = payload.get('data')
+            depression_count = data.get('depression_count')
+            emotion_count = data.get('emotion_count')
+            summary = data.get('summary')
+            wordcloud = data.get('wordcloud')
+            img_url = wordcloud.split('\\')[-2] + '/' + wordcloud.split('\\')[-1]
+
+            # 결과문 생성하기
+            ConsultResult.objects.create(     
+                member_id=user,
+                keyword = img_url,
+                emotion_temp = depression_count,
+                summary = summary,
+                emotion_list = emotion_count,
+                want_consult = True,
+                chat_id = chat_room,     
+            )
+
+            consultResult = ConsultResult.objects.filter(member_id=user)
+            average_emotion_temp = consultResult.aggregate(Avg('emotion_temp'))['emotion_temp__avg']
+
+            user_instance = User.objects.get(id=user.id)
+            user_instance.avg_emotion = average_emotion_temp
+            user_instance.save()
+
+            return HttpResponse(status=status.HTTP_200_OK)
+
+        
