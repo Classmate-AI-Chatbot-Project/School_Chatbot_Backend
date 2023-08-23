@@ -143,9 +143,13 @@ TEMPLATES = [
         # React의 index.html 있는 위치로 장고 템플릿 경로 변경
         'DIRS': [
             # os.path.join(BASE_DIR, 'frontend', 'schoollog-react-app', 'build'),
+<<<<<<< HEAD
             # 기존: 'C:/SchoolLog_backend/frontend/schoollog-react-app/build'
             'C:/frontend-schoollog/School_Chatbot/frontend/schoollog-react-app/build'
                 # 프론트엔드의 build 경로는 각자 개인 로컬 경로로 변경
+=======
+            'C:/SchoolLog_backend/frontend/schoollog-react-app/build'
+>>>>>>> 2530b66087a916dc418d259e15373c7400cf2c81
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -248,6 +252,7 @@ USE_TZ = False
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
+<<<<<<< HEAD
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # 정적 파일이 실제로 모일 디렉토리
 
@@ -259,6 +264,15 @@ STATICFILES_DIRS = [    # Django & React 추가적인 정적 파일 디렉토리
     'C:/frontend-schoollog/School_Chatbot/frontend/schoollog-react-app/build/static'
 ]
 #'''
+=======
+STATIC_URL = 'static/'
+STATIC_ROOT = 'static'
+# STATICFILES_DIRS = [    # React의 static 파일 가져오기
+#     # os.path.join(BASE_DIR, 'frontend', 'schoollog-react-app', 'build', 'static')
+#     'C:/SchoolLog_backend/frontend/schoollog-react-app/build/static'
+# ]
+
+>>>>>>> 2530b66087a916dc418d259e15373c7400cf2c81
 MEDIA_URL = '/media/'
 MEDIA_ROOT = 'media'
 
