@@ -24,10 +24,7 @@ urlpatterns = [
     path('chat/', include('chat.urls')),
     path('consult/', include('consult.urls')),
     path('account/', include('account.urls')),
-<<<<<<< HEAD
-=======
     path('teacher/', include('teacher.urls')),
->>>>>>> 2530b66087a916dc418d259e15373c7400cf2c81
     path('admin/', admin.site.urls),
     # React 첫 화면 url 설정
     path('', TemplateView.as_view(template_name='index.html')),  
