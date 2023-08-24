@@ -6,9 +6,11 @@
 *.pyc
 migrations/
 __pycache__/
-# my_settings.py
+my_settings.py
+# settings.py   
+# TEMPLATES의 'DIRS' 경로 바꿈 & STATICFILES_DIRS 주석 없앰
 db.sqlite3
 db.sqlite3-journal
 media
 chat/result_model/kobert
-# chat/kogpt2_model/
+chat/kogpt2_model/
