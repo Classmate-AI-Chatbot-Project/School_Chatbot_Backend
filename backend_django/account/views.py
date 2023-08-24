@@ -61,7 +61,7 @@ class kakao_login(APIView):
                         file_name = photo.split('/')[-1]
                         new_user.profile_photo.save(file_name, ContentFile(response.content), save=True)
                 new_user.save()
-                print("회원없어서 생성/ 학교, 직업 생성해야함.")
+                print("회원 없어서 생성/ 학교, 직업 생성해야 함.")
 
             return Response(token)
         except Exception:
