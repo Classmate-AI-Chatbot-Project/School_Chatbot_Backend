@@ -10,3 +10,4 @@ class StudentListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'email', 'profile_photo', 'avg_emotion')
+
