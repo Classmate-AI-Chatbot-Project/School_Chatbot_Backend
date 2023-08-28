@@ -16,7 +16,11 @@ def studentList(request):
     if request.method == 'GET':
         print(student_list)
         serializer = StudentListSerializer(student_list, many=True)
-        return HttpResponse(serializer.data)
+
+        data = {
+            'student_data':serializer.data
+        }
+        return JsonResponse(data)
     
 @login_required
 # student_id로 해당 학생의 세부 정보를 반환           
