@@ -5,6 +5,7 @@ import torch.nn as nn
 from kobert_transformers import get_kobert_model
 from torch.nn import CrossEntropyLoss, MSELoss
 from transformers import BertPreTrainedModel, BertConfig
+from collections import Counter
 
 
 kobert_config = {
@@ -190,6 +191,7 @@ def kobert_result(student_dialogs):
     # for emotion in emotion_count:
     #     emotion_percentage = (emotion_count[emotion] / total_count) * 100
 
+    category_count = Counter(category_count).most_common(3)
     depression_percentage = (depression_count['우울'] / total_count) * 100
 
 

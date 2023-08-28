@@ -31,6 +31,7 @@ class ConsultResult(models.Model):    # 상담 결과
     member_id = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     result_time = models.DateTimeField(auto_now_add=True)
     keyword = models.ImageField(null=True)
+    category = models.TextField(null=True)
 
     emotion_temp = models.FloatField()
     summary = models.TextField()
