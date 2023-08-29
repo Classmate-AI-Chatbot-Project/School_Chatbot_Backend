@@ -1,5 +1,6 @@
 # chat/views.py
 from rest_framework import status
+from django.db.models import Avg
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.http import JsonResponse
@@ -14,6 +15,7 @@ from django.shortcuts import render
 from django.utils import timezone
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from account.models import User
 
 '''
 # 메인 페이지 [상담하러 가기] 버튼, 그림 심리 테스트 [챗봇과 상담하기] 버튼, 
@@ -63,20 +65,24 @@ def chat_service(request, user_id, chatroom_id):  # URL에 포함된 값을 전�
             output = {'response': response}  # JSON 응답 생성
             return JsonResponse(output, status=200)
         
-    else:
-        return render(request, 'chat/index.html', context)
+        else:
+            return render(request, 'chat/index.html', context)
 
 # chat/end/<str:user_id>/<int:chatroom_id>/  
 def chat_end(request, user_id, chatroom_id):
+    user = request.user
     chat_room = ChatRoom.objects.get(chat_id=chatroom_id)
 
-    data = json.loads(request.body)
-    all_dialogue = data.get('all_dialogue', '')
+    all_messages = ChatMessage.objects.filter(chat_id=chat_room).order_by('message_time')
+    combined_text = ''
 
-    AllDialogue.objects.create(
-        chat_id=chat_room,
-        sender_user=request.user,
-        dialogue_text=all_dialogue
+    for message in all_messages:
+        combined_text = combined_text + message.sender + ":" + message.message_text + "\n"
+
+    AllDialogue.objects.create(     
+        chat_id=chat_room,  
+        sender_user=user,
+        dialogue_text=combined_text
     )
 
     response_data = {'message': '대화 종료'}
@@ -97,7 +103,6 @@ def chat_history(request, user_id, chatroom_id):
         return Response(history)
     except Exception as e:
         return Response({'error': str(e)}, status=500)
-
 
 # chat/result/<str:user_id>/<int:chatroom_id>/
 @login_required               
@@ -127,17 +132,18 @@ def chat_result(request, user_id, chatroom_id):
             os.makedirs(media_path, exist_ok=True)
             image_path = os.path.join(media_path, f'{chatroom_id}.png')
             wordcloud.to_file(image_path)
+            category_text = ', '.join([item[0] for item in category_count])
             
             # 요약문 생성하기
             summary = generate_summary(combined_text)
 
             # JSON으로 만들어서 클라이언트에게 전송
             context_data = {
-                'category_count': category_count,
                 'emotion_count': emotion_count,
                 'depression_count': depression_count,
                 'wordcloud':image_path,
                 'summary':summary,
+                'category' : category_text
             }
             data_json = json.dumps(context_data, ensure_ascii=False)
             return HttpResponse(data_json)
