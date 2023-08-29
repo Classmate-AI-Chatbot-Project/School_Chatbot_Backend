@@ -209,7 +209,7 @@ def room(request, room_name, student_id):
             # 2. 만약 string으로 가져오는 게 어려우면 메시지 내용을 주석 처리한 message_content_json 로 변경하고, content = message_content 주석처리하기
             # 3. 만약 2번도 어렵다면 해당 render 안의 json 데이터 이용하기
             # 새로운 상담 신청 메시지가 왔을 때 전 상담 신청 메시지도 감정 이모티콘이 표시되도록 하기.
-            # 전 신청 매시지의 이모티콘이 표시되지 않으면, 시도해보다가 안 되면, 그냥 emotion_temp 숫자 그대로 가져와서 표시하기 (ex: 우울도: 70°C)
+            # 전 신청 매시지의 이모티콘이 표시되지 않으면, 시도해보다가 안 되면, 그냥 emotion_temp 숫자 그대로 가져와서 표시하기 (ex: 우울도: 70%)
             # 상담 신청 메시지 클릭 => "챗봇 상담 결과" 페이지 url로 이동하기
         'has_consult_result': has_consult_result,   # Boolean
             # Frontend 적용: 학생에게 ConsultResult가 아무것도 없으면, 
