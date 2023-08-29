@@ -4,7 +4,7 @@ from account.models import User
 from chat.models import ConsultResult
 from django.http import HttpResponse, JsonResponse
 from rest_framework.response import Response
-from account.serializers import StudentListSerializer
+from account.serializers import StudentListSerializer, UserSerializer
 from teacher.serializers import ResultSerializer
 import json
 
@@ -48,6 +48,12 @@ def resultDetail(request, chat_id):
     user = request.user
     if request.method == 'GET': # 특정 chat_id로 접근시, 해당 채팅방의 결과 세부정보 반환
         student_chatResult = ConsultResult.objects.get(chat_id=chat_id)
-        serializer = ResultSerializer(student_chatResult)
+        Result_serializer = ResultSerializer(student_chatResult)
+        User_serializer = UserSerializer(user)
 
-        return JsonResponse(serializer.data)
+        data = {
+            'user_data' : User_serializer.data,
+            'result_data' : Result_serializer.data
+        }
+
+        return JsonResponse(data)
