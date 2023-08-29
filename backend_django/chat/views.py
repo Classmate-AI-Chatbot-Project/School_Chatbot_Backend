@@ -1,8 +1,9 @@
 # chat/views.py
-from django.db.models import Avg
 from rest_framework import status
+from django.db.models import Avg
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.http import JsonResponse
 import json, os
 from .kogpt2_chatbot import kogpt2_answer
 from .kobert import kobert_result
@@ -10,6 +11,10 @@ from .kobart import generate_summary
 from .wordcloud import get_wordcloud_data
 from django.contrib.auth.decorators import login_required   # 함수형 뷰에만 적용 가능
 from .models import ChatRoom, ChatMessage, AllDialogue, ConsultResult   # 모델 임포트
+from django.shortcuts import render
+from django.utils import timezone
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 from account.models import User
 
 '''
@@ -21,7 +26,6 @@ from account.models import User
 # 로그인 안 한 상태 => '로그인이 필요합니다' 모달창 띄우기
 # 로그인 한 상태 => 새로운 채팅방 생성하기 & 로그인한 user.id와 생성한 채팅방 id를 url에 전달하기
 '''
-
 @login_required           
 def chat_service(request, user_id, chatroom_id):  # URL에 포함된 값을 전달받음 (ex: /chat/1/1/)
     # 현재 로그인한 사용자
@@ -33,16 +37,20 @@ def chat_service(request, user_id, chatroom_id):  # URL에 포함된 값을 전�
     context = { 'user': user.id, 'chat_room': chat_room.chat_id }
 
     if request.method == 'POST':
-        user_input = request.POST['input1']     # 사용자 채팅
+        data = json.loads(request.body)
+        user_input = data.get('message', '')  # 'message' 키로 데이터를 가져옴
 
         # 사용자가 '종료하기'를 입력하지 않았을 때만 메시지 저장
         if user_input != '종료하기':
+            # 현재 시간 가져오기
+            current_time = timezone.now()
             # 사용자 메시지 저장
             ChatMessage.objects.create(     
                 chat_id=chat_room,  
                 sender='student',
                 message_text=user_input,
-                sender_user=user
+                sender_user=user,
+                message_time=current_time
             )
             # 챗봇 응답 생성 및 저장
             response = kogpt2_answer(user_input, user)    # 사용자 정보 & 발화 입력
@@ -50,37 +58,54 @@ def chat_service(request, user_id, chatroom_id):  # URL에 포함된 값을 전�
             ChatMessage.objects.create(      
                 chat_id=chat_room,  
                 sender='chatbot',
-                message_text=response
+                message_text=response,
+                sender_user=user,
+                message_time=current_time
             )
+
             # POST 요청 => response에 output 챗봇 응답 메시지를 담아서 json 형태로 리턴
-            output = dict()
-            output['response'] = response
-            return HttpResponse(json.dumps(output), status=200)
+            output = {'response': response}  # JSON 응답 생성
+            return JsonResponse(output, status=200)
         
-        else:   # '종료하기' 입력하면
-            # 챗봇과 사용자의 저장된 발화들을 하나의 문자열로 연결하여 저장하기
-            all_messages = ChatMessage.objects.filter(chat_id=chat_room).order_by('message_time')
-            # combined_text = '\n'.join([message.message_text for message in all_messages])
-            combined_text = ''
+    else:
+        return render(request, 'chat/index.html', context)
 
-            for message in all_messages:
-                 combined_text = combined_text + message.sender + ":" + message.message_text + "\n"
+# chat/end/<str:user_id>/<int:chatroom_id>/  
+def chat_end(request, user_id, chatroom_id):
+    user = request.user
+    chat_room = ChatRoom.objects.get(chat_id=chatroom_id)
 
-            AllDialogue.objects.create(     
+    all_messages = ChatMessage.objects.filter(chat_id=chat_room).order_by('message_time')
+    combined_text = ''
+
+    for message in all_messages:
+        combined_text = combined_text + message.sender + ":" + message.message_text + "\n"
+
+    AllDialogue.objects.create(     
                 chat_id=chat_room,  
                 sender_user=user,
                 dialogue_text=combined_text
             )
-            # DB에 저장한 모든 대화 텍스트를 KoBERT 모델에 전달/입력하기
 
-            # '상담 분석 중' 로딩 창으로 이동하기
-            
-            # 임시 챗봇 응답
-            output = dict()
-            output['response'] = "대화 종료"
-            return HttpResponse(json.dumps(output), status=200)
-    else:
-        return render(request, 'chat/chat_test.html', context)
+    response_data = {'message': '대화 종료'}
+    return JsonResponse(response_data, status=200)
+
+# chat/history/<str:user_id>/<int:chatroom_id>/     
+@api_view(['GET'])
+def chat_history(request, user_id, chatroom_id):
+    try:
+        # Fetch chat history and format it as a list of dictionaries
+        chat_messages = ChatMessage.objects.filter(chat_id=chatroom_id)
+        history = [{'sender': message.sender,
+                    'date': message.message_time.strftime('%Y년 %m월 %d일'),
+                    'time': message.message_time.strftime('%H:%M'),
+                    'message': message.message_text}
+                    for message in chat_messages]
+        
+        return Response(history)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
 
 # chat/result/<str:user_id>/<int:chatroom_id>/
 @login_required               
@@ -110,17 +135,18 @@ def chat_result(request, user_id, chatroom_id):
             os.makedirs(media_path, exist_ok=True)
             image_path = os.path.join(media_path, f'{chatroom_id}.png')
             wordcloud.to_file(image_path)
+            category_text = ', '.join([item[0] for item in category_count])
             
             # 요약문 생성하기
             summary = generate_summary(combined_text)
 
             # JSON으로 만들어서 클라이언트에게 전송
             context_data = {
-                'category_count': category_count,
                 'emotion_count': emotion_count,
                 'depression_count': depression_count,
                 'wordcloud':image_path,
                 'summary':summary,
+                'category' : category_text
             }
             data_json = json.dumps(context_data, ensure_ascii=False)
             return HttpResponse(data_json)
