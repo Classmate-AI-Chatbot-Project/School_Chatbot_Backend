@@ -1,6 +1,6 @@
 # chat/urls.py
 
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 urlpatterns = [
@@ -9,4 +9,3 @@ urlpatterns = [
     path('history/<str:user_id>/<int:chatroom_id>/', views.chat_history, name='chatHistory'),
     path('end/<str:user_id>/<int:chatroom_id>/', views.chat_end, name='chatEnd'),
 ]
-
