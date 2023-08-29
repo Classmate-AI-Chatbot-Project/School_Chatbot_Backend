@@ -1,4 +1,4 @@
-<!-- consult/templates/consult/room.html -->
+<!-- consult/templates/consult/room_first.html -->
 
 {% load static %}
 <!DOCTYPE html>
@@ -21,72 +21,11 @@
 
 <body>
   <div id="frame">
-    <div id="sidepanel">
-      <div id="profile">
-        <div class="wrap">
-          <img id="profile-img" src="http://emilcarlsson.se/assets/mikeross.png" class="online" alt="" />
-          <p>Mike Ross</p>
-          <i class="fa fa-chevron-down expand-button" aria-hidden="true"></i>
-          <div id="status-options">
-            <ul>
-              <li id="status-online" class="active"><span class="status-circle"></span> <p>Online</p></li>
-              <li id="status-away"><span class="status-circle"></span> <p>Away</p></li>
-              <li id="status-busy"><span class="status-circle"></span> <p>Busy</p></li>
-              <li id="status-offline"><span class="status-circle"></span> <p>Offline</p></li>
-            </ul>
-          </div>
-          <div id="expanded">
-            <label for="twitter"><i class="fa fa-facebook fa-fw" aria-hidden="true"></i></label>
-            <input name="twitter" type="text" value="mikeross" />
-            <label for="twitter"><i class="fa fa-twitter fa-fw" aria-hidden="true"></i></label>
-            <input name="twitter" type="text" value="ross81" />
-            <label for="twitter"><i class="fa fa-instagram fa-fw" aria-hidden="true"></i></label>
-            <input name="twitter" type="text" value="mike.ross" />
-          </div>
-        </div>
-      </div>
-      <div id="search">
-        <label for=""><i class="fa fa-search" aria-hidden="true"></i></label>
-        <input type="text" placeholder="Search contacts..." />
-      </div>
-      <div id="contacts">
-        <ul>
-          <li class="contact">
-            <div class="wrap">
-              <span class="contact-status online"></span>
-              <img src="http://emilcarlsson.se/assets/louislitt.png" alt="" />
-              <div class="meta">
-                <p class="name">Louis Litt</p>
-                <p class="preview">You just got LITT up, Mike.</p>
-              </div>
-            </div>
-          </li>
-          <li class="contact active">
-            <div class="wrap">
-              <span class="contact-status busy"></span>
-              <img src="http://emilcarlsson.se/assets/harveyspecter.png" alt="" />
-              <div class="meta">
-                <p class="name">Harvey Specter</p>
-                <p class="preview">Wrong. You take the gun, or you pull out a bigger one. Or, you call their bluff. Or, you do any one of a hundred and forty six other things.</p>
-              </div>
-            </div>
-          </li>
-        </ul>
-      </div>
-      <div id="bottom-bar">
-        <button id="addcontact"><i class="fa fa-user-plus fa-fw" aria-hidden="true"></i> <span>Add contact</span></button>
-        <button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>Settings</span></button>
-      </div>
-    </div>
+    <!-- view.py에서 전달받은 User 데이터 표시 -->
     <div class="content">
       <div class="contact-profile">
-        <img src="http://emilcarlsson.se/assets/harveyspecter.png" alt="" />
+        <img src= "{{ user_profile }}" alt="" />
         <p>{{ username }}</p>
-        <div class="social-media">
-          <i class="fa fa-facebook" aria-hidden="true"></i>
-          <i class="fa fa-twitter" aria-hidden="true"></i>
-          <i class="fa fa-instagram" aria-hidden="true"></i>
-        </div>
       </div>
       <div class="messages">
         <ul id="chat-log">
@@ -104,11 +43,10 @@
       </div>
       <div class="message-input">
         <div class="wrap">
-        <input id="chat-message-input" type="text" placeholder="Write your message..." />
-        <i class="fa fa-paperclip attachment" aria-hidden="true"></i>
-        <button id="chat-message-submit" class="submit">
-          <i class="fa fa-paper-plane" aria-hidden="true"></i>
-        </button>
+            <input id="chat-message-input" type="text" placeholder="Write your message..." />
+            <button id="chat-message-submit" class="submit">
+                <i class="fa fa-paper-plane" aria-hidden="true"></i>
+            </button>
         </div>
       </div>
     </div>
@@ -117,39 +55,46 @@
 <script src="{% static 'consult/main.js' %}"></script>
 <script src="{% static 'consult/reconnecting-websocket.js' %}"></script>
 <script>
-    // view에서 전달받은 room_name_json, username
-    var roomName = {{ room_name_json }};
-    var username = {{ username }};
+    // view에서 전달받은 4가지 정보
+    var roomName = {{ room_id_json }};
+    var username = "{{ username }}";
+    var userProfile = "{{ user_profile }}";
+    var otherUserProfile = "{{ other_user_profile }}";
+    var hasConsultResult = {{ has_consult_result|yesno:"true,false" }};  // Convert boolean to JS boolean value
 
     var chatSocket = new ReconnectingWebSocket(
         'ws://' + window.location.host +
         '/ws/chat/' + roomName + '/'
     );
-    // 웹 소켓 처음 열리면 지난 메시지들 preload
+
+    // Websocket에 연결되면 지난 메시지들 preload
     chatSocket.onopen = function(e) {
       fetchMessages();
     }
-    // 웹 소켓이 메시지 받으면 createMessage 함수 호출 => chat-log에 display
+
+    // Websocket Client가 서버로부터 메시지 받으면 createMessage 함수 호출 => chat-log에 display
     chatSocket.onmessage = function(e) {
         var data = JSON.parse(e.data);
         if (data['command'] === 'messages') {   // 지난 메시지들 all
-          for (let i=0; i<data['messages'].length; i++) {
+          for (let i = 0; i < data['messages'].length; i++) {
             createMessage(data['messages'][i]);
           }
-        } else if (data['command'] === 'new_message'){  // 새 메시지 1개
-          createMessage(data['message']);
+        } else if (data['command'] === 'new_message') {  // 새 메시지 1개
+            createMessage(data['message']);   // 상담 신청 & 발신자 메시지
         }
-    };
+    }
 
     chatSocket.onclose = function(e) {
         console.error('Chat socket closed unexpectedly');
     };
 
+    // Enter 누르면 click 이벤트가 발생
     document.querySelector('#chat-message-input').onkeyup = function(e) {
         if (e.keyCode === 13) {  // enter, return
             document.querySelector('#chat-message-submit').click();
         }
     };
+
     // submit 버튼 누르면 웹 소켓으로 새 메시지 전송
     document.querySelector('#chat-message-submit').onclick = function(e) {
         var messageInputDom = document.getElementById('chat-message-input');
@@ -159,35 +104,53 @@
             'command': 'new_message',
             'message': message,
             'from': username,
-            // 'consult_id': consult_room.consult_id
         }));
-
+        // input 박스 초기화
         messageInputDom.value = '';
     };
 
     function fetchMessages() {
-      // consumers.py의 fetch_messages 함수 실행
-      chatSocket.send(JSON.stringify({'command': 'fetch_messages' }));
+      // 웹 소켓에 JSON 형태의 command 전송 => consumers.py의 fetch_messages 함수 실행
+      chatSocket.send(JSON.stringify({'command': 'fetch_messages'}));
     }
 
-    // username + profile_img + message 합해서 하나의 메시지로 만들고 chat-log에 display
+    // username + userProfile + message 합해서 하나의 메시지로 만들고 chat-log에 display
     function createMessage(data) {
       // <ul id="chat-log"> 안에 있는 li, img, p 태그 
-      var author = data['author'];      // 발신자(작성자)
+      var author = data['author'];          // 발신자(작성자)
+      var timestamp = new Date(data['timestamp']);   // 메시지 전송 시간
+        // var timestamp = data['timestamp'];          // (timestamp 값 예시: 2023-08-25 11:48:34.816737)
+        // Frontend에 적용: timestamp와 현재 시간과 비교하여 
+        // 오늘 날짜에 처음 보낸 메시지면 화면 가운데에 "OOOO년 OO월 OO일" 날짜 표시 후 메시지 시간을 hh:mm 형식으로 표시하기
+      
       var msgListTag = document.createElement('li');
       var imgTag = document.createElement('img');
       var pTag = document.createElement('p');
+      var spanTag = document.createElement('span');
+      
       pTag.textContent = data.content;
-      imgTag.src = 'http://emilcarlsson.se/assets/mikeross.png';
+      spanTag.textContent = author + " - " + formatTime(timestamp);   // hh:mm 형식 표시
+      imgTag.src = (author === username) ? userProfile : otherUserProfile;
+        // 발신자 == 로그인한 사용자면 내 프로필 사진 표시 (아니면 상대방 사진 표시)
+        // Frontend: 본인 사진은 안 나오고 상대방 사진만 나오도록 변경하기
       
       if (author === username) {
         msgListTag.className = 'sent'; 
       } else {
         msgListTag.className = 'replies';
-      }
+      } 
       msgListTag.appendChild(imgTag);
       msgListTag.appendChild(pTag);
+      msgListTag.appendChild(spanTag);
       document.querySelector('#chat-log').appendChild(msgListTag);
+    }
+
+    function formatTime(date) {
+      // 메시지 시간을 Date 객체로 받아 hh:mm 형식으로 반환하는 함수
+      var hours = date.getHours();
+      var minutes = date.getMinutes();
+      var formattedTime = hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0');
+      return formattedTime;
     }
 
 </script>

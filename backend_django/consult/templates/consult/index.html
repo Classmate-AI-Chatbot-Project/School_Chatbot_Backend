@@ -1,5 +1,4 @@
 <!-- consult/templates/consult/index.html -->
-<!-- 참가할 채팅방의 번호를 입력하는 index view -->
 
 <!DOCTYPE html>
 <html> 
@@ -8,22 +7,42 @@
     <title>Consult Rooms</title>
 </head>
 <body>
-    What chat room would you like to enter?<br/>
-    <input id="room-name-input" type="text" size="100"/><br/>
-    <input id="room-name-submit" type="button" value="Enter"/>
+    <!-- Frontend 적용: 
+    1) 학생이 챗봇 분석 결과 페이지 하단의 [상담 신청하기] 버튼을 누르면 새로운 ConsultRoom 생성 / 기존 ConsultRoom 이동 & 상담 신청 메시지 전송
+    2) 선생님은 학생 프로필 페이지의 [상담하기] 버튼을 누르면 기존 ConsultRoom으로 이동 -->
+    <form id="create-room-form" action="{% url 'consult:create_or_redirect_room' %}" method="post">
+        {% csrf_token %}
+        <input type="submit" value="상담 신청하기(학생) / 상담하기(선생님)">
+    </form>
+
+    <!-- 학생과 선생님 유저의 상담 채팅방 목록. 
+        상담(채팅방)목록 페이지 item을 눌러 해당 ConsultRoom으로 이동 -->
+    <h1>상담 채팅방 리스트</h1>
+    {% for item in consult_room_items %}
+    <div class="consult-room-item">
+        <img src="{{ item.user_profile }}" alt="Other User's Profile Photo">
+        <p>{{ item.username }}</p>
+        <p>감정 온도: {{ item.emotion_temp }}</p>
+        <p>키워드: {{ item.category }}</p>
+        <p>결과 시간: {{ item.result_time }}</p>
+        
+        <!-- 새 메시지가 왔을 때 생성된 알림이 안 읽은 상태면 new 표시
+        new 표시가 뜬 채팅방을 클릭해 채팅방으로 들어가면 new 표시가 사라짐 -->
+        {% if item.is_unread %}  
+            <h4>New!</h4>
+        {% endif %}
+        
+        <a href="{% url 'consult:room' room_name=item.room_id student_id=item.student_id %}">채팅방 입장</a>
+    </div>
+    {% endfor %}
 
     <script>
-        document.querySelector('#room-name-input').focus();
-        document.querySelector('#room-name-input').onkeyup = function(e) {
-            if (e.keyCode === 13) {  // enter, return
-                document.querySelector('#room-name-submit').click();
-            }
-        };
-
-        document.querySelector('#room-name-submit').onclick = function(e) {
-            var roomName = document.querySelector('#room-name-input').value;
-            window.location.pathname = '/consult/' + roomName + '/';
-        };
+        // [상담 신청하기] 버튼을 누르면
+        document.querySelector('#create-room-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            window.location.pathname = '/consult/create/';  // create_or_redirect_room 뷰 함수 실행
+                // 상담 채팅방을 생성하거나 기존 채팅방으로 리다이렉션
+        });
     </script>
 </body>
 </html>
