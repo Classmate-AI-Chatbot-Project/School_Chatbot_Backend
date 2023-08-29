@@ -134,6 +134,9 @@ def chat_result(request, user_id, chatroom_id):
             summary = data.get('summary')
             wordcloud = data.get('wordcloud')
             img_url = wordcloud.split('\\')[-2] + '/' + wordcloud.split('\\')[-1]
+            categories = data.get('category_count')
+
+            category_text = ', '.join([item[0] for item in categories])
 
             # 결과문 생성하기
             ConsultResult.objects.create(     
@@ -143,7 +146,8 @@ def chat_result(request, user_id, chatroom_id):
                 summary = summary,
                 emotion_list = emotion_count,
                 want_consult = True,
-                chat_id = chat_room,     
+                chat_id = chat_room,
+                category = category_text
             )
 
             consultResult = ConsultResult.objects.filter(member_id=user)
