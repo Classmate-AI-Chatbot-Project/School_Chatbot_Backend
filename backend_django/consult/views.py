@@ -13,7 +13,7 @@ from account.models import User
 from chat.models import ConsultResult
 
 # /consult : [상담 신청하기/상담하기] 버튼 + 상담 채팅방 목록 페이지
-# 상담 목록 페이지 : 학생은 선생님과의 채팅방 1개, 선생님은 여러 학생들과의 채팅방 n개 표시하기 위해 json 데이터 전달
+# 상담 목록 페이지 : 학생은 선생님과의 채팅방 1개, 선생님은 여러 학생들과의 채팅방 n개 표시
 def index(request):
     user = request.user
     consult_room_items = []     # 채팅방 list items
@@ -58,8 +58,7 @@ def index(request):
 
     context = {'consult_room_items': consult_room_items}
     return render(request, 'consult/index.html', context)
-        # 테스트: index.html로 이동 ([상담 신청하기/상담하기] 버튼 + 상담 채팅방 리스트 페이지)
-        # Frontend에 적용할 때는 상담 채팅방 목록 페이지 url로 이동하도록 수정하기
+        # 테스트: index.html로 이동 => Frontend에 적용할 때는 상담 채팅방 목록 페이지 url로 이동하도록 수정하기
 
 
 @login_required     
@@ -169,15 +168,19 @@ def room(request, room_name, student_id):
     consult_room = ConsultRoom.objects.get(room_id=room_id, student=student_id)
     user = request.user
     is_student = user.job == 1 
-    consult_room.mark_notifications_as_read(user)
-        # When the user enters the room, Mark the notifications as read
+
+    # When the user enters the room, Mark the notifications as read
+    consult_room.mark_notifications_as_read(user)   
+
+    # 상담 신청 메시지에 표시할 학생의 최근 ConsultResult 가져오기
     consult_result = ConsultResult.objects.filter(member_id = student_id).latest('result_time')
-        # 상담 신청 메시지에 표시할 학생의 최근 ConsultResult 가져오기
+        
+    # If the student does not have consult result, chat with chatbot first
     has_consult_result = ConsultResult.objects.filter(member_id=student_id).exists()
-        # If the student does not have consult result, chat with chatbot first
+
+    # 해당 채팅방의 상담 신청 메시지들  
     consult_request_messages = ConsultMessage.objects.filter(room_id=consult_room, is_consult_request=True)
-        # 해당 채팅방의 상담 신청 메시지들
-    
+        
     # 상대방의 프로필 사진 가져오기 Retrieve other user's profile photo
     if is_student:
         teacher_id = consult_room.teacher.id
@@ -191,20 +194,23 @@ def room(request, room_name, student_id):
     # 상담 채팅방에 표시할 데이터를 json 형태로 consult/room.html에 전달
     return render(request, "consult/room.html", {
         'room_id_json': mark_safe(json.dumps(room_id)),
+        # Frontend: 선생님 프로필 사진 클릭 => 모달창 팝업 / 학생 프로필 사진 클릭 => 프로필 페이지 url로 이동하기
         'username': user.username,              # 현재 로그인한 사용자
         'other_username': other_user.username,  # 대화 상대방
         'user_profile': user_profile,
         'other_user_profile': other_user_profile,
         # 상담 신청 메시지 데이터
         'consult_request_messages': consult_request_messages,  # 상담 신청 메시지 목록
-        'category': consult_result.category,    # 키워드
-        'emotion_temp': consult_result.emotion_temp,
+        'category': consult_result.category,                   # 키워드
+        'emotion_temp': consult_result.emotion_temp,           # 우울도(depression_count)
         'result_time': consult_result.result_time.strftime('%Y년 %m월 %d일'),
+            # Frontend:
             # 1. 우선 DB에 저장된 상담 신청 메시지 내용(string)을 가져와서 Frontend의 상담 신청 메시지 양식에 표시하기 (is_consult_request=True인 consult_request_messages)
             # 2. 만약 string으로 가져오는 게 어려우면 메시지 내용을 주석 처리한 message_content_json 로 변경하고, content = message_content 주석처리하기
             # 3. 만약 2번도 어렵다면 해당 render 안의 json 데이터 이용하기
             # 새로운 상담 신청 메시지가 왔을 때 전 상담 신청 메시지도 감정 이모티콘이 표시되도록 하기.
-            # 전 신청 매시지의 이모티콘이 표시되지 않으면, 시도해보다가 안 되면, 그냥 감정 온도 숫자 그대로 가져와서 표시하기 (ex: 70°C)
+            # 전 신청 매시지의 이모티콘이 표시되지 않으면, 시도해보다가 안 되면, 그냥 emotion_temp 숫자 그대로 가져와서 표시하기 (ex: 우울도: 70°C)
+            # 상담 신청 메시지 클릭 => "챗봇 상담 결과" 페이지 url로 이동하기
         'has_consult_result': has_consult_result,   # Boolean
             # Frontend 적용: 학생에게 ConsultResult가 아무것도 없으면, 
             # “챗봇과 먼저 이야기를 나눠보세요!” 문구 & [챗봇과 상담하기] 버튼 표시 & 메시지 input 창 비활성화
