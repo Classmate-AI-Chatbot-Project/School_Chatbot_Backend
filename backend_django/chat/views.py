@@ -20,8 +20,6 @@ from account.models import User
 '''
 # 메인 페이지 [상담하러 가기] 버튼, 그림 심리 테스트 [챗봇과 상담하기] 버튼, 
 # 선생님 상담 페이지 [챗봇과 상담하기] 버튼, 메뉴바 [챗봇과 상담하기] 버튼
-# 위의 버튼을 누르면 아래 링크 연결
-<a href="{% url 'chat_service' user.id chat_room.chat_id %}">채팅 서비스 입장</a>
 
 # 로그인 안 한 상태 => '로그인이 필요합니다' 모달창 띄우기
 # 로그인 한 상태 => 새로운 채팅방 생성하기 & 로그인한 user.id와 생성한 채팅방 id를 url에 전달하기
@@ -67,8 +65,8 @@ def chat_service(request, user_id, chatroom_id):  # URL에 포함된 값을 전�
             output = {'response': response}  # JSON 응답 생성
             return JsonResponse(output, status=200)
         
-    else:
-        return render(request, 'chat/index.html', context)
+        else:
+            return render(request, 'chat/index.html', context)
 
 # chat/end/<str:user_id>/<int:chatroom_id>/  
 def chat_end(request, user_id, chatroom_id):
@@ -82,10 +80,10 @@ def chat_end(request, user_id, chatroom_id):
         combined_text = combined_text + message.sender + ":" + message.message_text + "\n"
 
     AllDialogue.objects.create(     
-                chat_id=chat_room,  
-                sender_user=user,
-                dialogue_text=combined_text
-            )
+        chat_id=chat_room,  
+        sender_user=user,
+        dialogue_text=combined_text
+    )
 
     response_data = {'message': '대화 종료'}
     return JsonResponse(response_data, status=200)
@@ -105,7 +103,6 @@ def chat_history(request, user_id, chatroom_id):
         return Response(history)
     except Exception as e:
         return Response({'error': str(e)}, status=500)
-
 
 # chat/result/<str:user_id>/<int:chatroom_id>/
 @login_required               

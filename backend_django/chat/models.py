@@ -19,13 +19,16 @@ class ChatMessage(models.Model):
     message_time = models.DateTimeField(auto_now_add=True)     # 처음 생성 일시만 자동 기록 
 
     def __str__(self):
-        return f'ChatMessage[{self.message_id}] {self.sender}'
+        return f'ChatMessage[{self.message_id}] {self.message_text} by {self.sender}'
 
-class AllDialogue(models.Model):    # 모든 메시지 합쳐서 하나로 관리 (KoBERT, KoBART에 전송)
+class AllDialogue(models.Model):
     dialogue_id = models.AutoField(primary_key=True)
     chat_id = models.OneToOneField(ChatRoom, on_delete=models.CASCADE)
-    sender_user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)  # 나중에 null 없애기
+    sender_user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     dialogue_text = models.TextField()
+
+    def __str__(self):
+        return f'AllDialogue[{self.dialogue_id}] {self.chat_id}'
  
 class ConsultResult(models.Model):    # 상담 결과
     member_id = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
