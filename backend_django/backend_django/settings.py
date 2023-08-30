@@ -257,6 +257,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # 정적 파일이 실제�
 STATICFILES_DIRS = [    # Django & React 추가적인 정적 파일 디렉토리의 경로 지정
     os.path.join(BASE_DIR, 'static'),
     'C:/frontend-schoollog/School_Chatbot/frontend/schoollog-react-app/build/static'
+        # 프론트엔드의 build/static 경로는 각자 개인 로컬 경로로 변경
 ]
 #'''
 MEDIA_URL = '/media/'
