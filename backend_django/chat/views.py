@@ -139,6 +139,7 @@ def chat_result(request, user_id, chatroom_id):
 
             # JSON으로 만들어서 클라이언트에게 전송
             context_data = {
+                'category_count': category_count,
                 'emotion_count': emotion_count,
                 'depression_count': depression_count,
                 'wordcloud':image_path,
