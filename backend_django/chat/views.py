@@ -20,8 +20,6 @@ from account.models import User
 '''
 # 메인 페이지 [상담하러 가기] 버튼, 그림 심리 테스트 [챗봇과 상담하기] 버튼, 
 # 선생님 상담 페이지 [챗봇과 상담하기] 버튼, 메뉴바 [챗봇과 상담하기] 버튼
-# 위의 버튼을 누르면 아래 링크 연결
-<a href="{% url 'chat_service' user.id chat_room.chat_id %}">채팅 서비스 입장</a>
 
 # 로그인 안 한 상태 => '로그인이 필요합니다' 모달창 띄우기
 # 로그인 한 상태 => 새로운 채팅방 생성하기 & 로그인한 user.id와 생성한 채팅방 id를 url에 전달하기
@@ -82,10 +80,10 @@ def chat_end(request, user_id, chatroom_id):
         combined_text = combined_text + message.sender + ":" + message.message_text + "\n"
 
     AllDialogue.objects.create(     
-                chat_id=chat_room,  
-                sender_user=user,
-                dialogue_text=combined_text
-            )
+        chat_id=chat_room,  
+        sender_user=user,
+        dialogue_text=combined_text
+    )
 
     response_data = {'message': '대화 종료'}
     return JsonResponse(response_data, status=200)
@@ -106,7 +104,6 @@ def chat_history(request, user_id, chatroom_id):
     except Exception as e:
         return Response({'error': str(e)}, status=500)
 
-
 # chat/result/<str:user_id>/<int:chatroom_id>/
 @login_required               
 def chat_result(request, user_id, chatroom_id):
@@ -125,7 +122,7 @@ def chat_result(request, user_id, chatroom_id):
                 content = content.strip()
                 if role == 'student':
                      student_dialogs.append(content)
-
+            
             # KoBERT 이용하여 감정, 우울도 json 가져오기
             category_count, emotion_count, depression_count = kobert_result(student_dialogs)
             wordcloud = get_wordcloud_data(student_dialogs)
@@ -136,7 +133,7 @@ def chat_result(request, user_id, chatroom_id):
             image_path = os.path.join(media_path, f'{chatroom_id}.png')
             wordcloud.to_file(image_path)
             category_text = ', '.join([item[0] for item in category_count])
-            
+
             # 요약문 생성하기
             summary = generate_summary(combined_text)
 
@@ -148,8 +145,8 @@ def chat_result(request, user_id, chatroom_id):
                 'summary':summary,
                 'category' : category_text
             }
-            data_json = json.dumps(context_data, ensure_ascii=False)
-            return HttpResponse(data_json)
+
+            return JsonResponse(context_data)
         
         if request.method == 'POST':
             # Payload 받아오기
@@ -160,9 +157,9 @@ def chat_result(request, user_id, chatroom_id):
             summary = data.get('summary')
             wordcloud = data.get('wordcloud')
             img_url = wordcloud.split('\\')[-2] + '/' + wordcloud.split('\\')[-1]
-            categories = data.get('category_count')
+            categories = data.get('category')
 
-            category_text = ', '.join([item[0] for item in categories])
+            #category_text = ', '.join([item[0] for item in categories])
 
             # 결과문 생성하기
             ConsultResult.objects.create(     
@@ -173,7 +170,7 @@ def chat_result(request, user_id, chatroom_id):
                 emotion_list = emotion_count,
                 want_consult = True,
                 chat_id = chat_room,
-                category = category_text
+                category = categories
             )
 
             consultResult = ConsultResult.objects.filter(member_id=user)
@@ -184,5 +181,3 @@ def chat_result(request, user_id, chatroom_id):
             user_instance.save()
 
             return HttpResponse(status=status.HTTP_200_OK)
-
-        
