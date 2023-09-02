@@ -41,4 +41,8 @@ class ConsultResult(models.Model):    # 상담 결과
     emotion_list = models.JSONField()
     want_consult = models.BooleanField()
     chat_id = models.OneToOneField(ChatRoom, on_delete=models.CASCADE, primary_key=True)
+    is_read = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f'ConsultResult[{self.member_id}] {self.chat_id}'
  
