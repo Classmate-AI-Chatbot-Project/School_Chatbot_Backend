@@ -48,6 +48,8 @@ def resultDetail(request, chat_id):
     user = request.user
     if request.method == 'GET': # 특정 chat_id로 접근시, 해당 채팅방의 결과 세부정보 반환
         student_chatResult = ConsultResult.objects.get(chat_id=chat_id)
+        student_chatResult.is_read = True
+
         Result_serializer = ResultSerializer(student_chatResult)
         User_serializer = UserSerializer(user)
 
