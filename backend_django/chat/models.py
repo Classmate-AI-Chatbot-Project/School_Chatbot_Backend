@@ -26,6 +26,9 @@ class AllDialogue(models.Model):    # 모든 메시지 합쳐서 하나로 관�
     chat_id = models.OneToOneField(ChatRoom, on_delete=models.CASCADE)
     sender_user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)  # 나중에 null 없애기
     dialogue_text = models.TextField()
+
+    def __str__(self):
+        return f'AllDialogue[{self.dialogue_id}] {self.chat_id}'
  
 class ConsultResult(models.Model):    # 상담 결과
     member_id = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
@@ -40,4 +43,6 @@ class ConsultResult(models.Model):    # 상담 결과
     chat_id = models.OneToOneField(ChatRoom, on_delete=models.CASCADE, primary_key=True)
     is_read = models.BooleanField(default=False)
     
+    def __str__(self):
+        return f'ConsultResult[{self.member_id}] {self.chat_id}'
  
