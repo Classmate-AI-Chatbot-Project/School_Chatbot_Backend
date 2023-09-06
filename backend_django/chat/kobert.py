@@ -82,8 +82,8 @@ class KoBERTforSequenceClassfication(BertPreTrainedModel):
 def load_wellness_answer():
     current_directory = os.path.dirname(__file__)
     category_path = os.path.join(current_directory, 'data', 'category.txt')
-    emotion_path = os.path.join(current_directory, 'data', 'emotion.txt')
-    depression_path = os.path.join(current_directory, 'data', 'depression.txt')
+    emotion_path = os.path.join(current_directory, 'data', 'emotion2.txt')
+    depression_path = os.path.join(current_directory, 'data', 'depression2.txt')
 
     c_f = open(category_path, 'r', encoding='UTF8')
     e_f = open(emotion_path, 'r', encoding='UTF8')
@@ -165,6 +165,7 @@ def kobert_result(student_dialogs):
     emotion_count['분노'] = 0
     emotion_count['후회'] = 0
     emotion_count['중립'] = 0
+    emotion_count['긍정'] = 0
 
     for dialogue in student_dialogs:
         data = kobert_input(tokenizer, dialogue, device, 512)
@@ -192,7 +193,8 @@ def kobert_result(student_dialogs):
     #     emotion_percentage = (emotion_count[emotion] / total_count) * 100
 
     category_count = Counter(category_count).most_common(3)
-    depression_percentage = (depression_count['우울'] / total_count) * 100
+    depression_percentage = (((depression_count['우울'] * 1)+(depression_count['중립'] * 0.5)+(depression_count['비우울'] * 0)) / total_count ) * 100
+    # depression_percentage = (depression_count['우울'] / total_count) * 100
 
 
     return category_count, emotion_count, depression_percentage
