@@ -122,7 +122,7 @@ def chat_result(request, user_id, chatroom_id):
                 content = content.strip()
                 if role == 'student':
                      student_dialogs.append(content)
-            
+
             # KoBERT 이용하여 감정, 우울도 json 가져오기
             category_count, emotion_count, depression_count = kobert_result(student_dialogs)
             wordcloud = get_wordcloud_data(student_dialogs)
@@ -133,7 +133,7 @@ def chat_result(request, user_id, chatroom_id):
             image_path = os.path.join(media_path, f'{chatroom_id}.png')
             wordcloud.to_file(image_path)
             category_text = ', '.join([item[0] for item in category_count])
-
+            
             # 요약문 생성하기
             summary = generate_summary(combined_text)
 
@@ -146,7 +146,6 @@ def chat_result(request, user_id, chatroom_id):
                 'summary':summary,
                 'category' : category_text
             }
-
             return JsonResponse(context_data)
         
         if request.method == 'POST':
@@ -160,7 +159,7 @@ def chat_result(request, user_id, chatroom_id):
             img_url = wordcloud.split('\\')[-2] + '/' + wordcloud.split('\\')[-1]
             categories = data.get('category')
 
-            #category_text = ', '.join([item[0] for item in categories])
+            # category_text = ', '.join([item[0] for item in categories])
 
             # 결과문 생성하기
             ConsultResult.objects.create(     
@@ -182,3 +181,5 @@ def chat_result(request, user_id, chatroom_id):
             user_instance.save()
 
             return HttpResponse(status=status.HTTP_200_OK)
+
+        

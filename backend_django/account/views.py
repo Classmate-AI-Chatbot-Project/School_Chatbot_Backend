@@ -1,5 +1,5 @@
 from django.views import View
-from django.http import HttpResponse 
+from django.http import HttpResponse, JsonResponse
 from rest_framework import status
 from django.core.files.base import ContentFile
 from rest_framework.views import APIView
@@ -7,6 +7,8 @@ from rest_framework.response import Response
 from .serializers import UserSerializer
 from rest_framework.permissions import IsAuthenticated
 from account.models import User
+from chat.models import ConsultResult
+from teacher.serializers import ResultSerializer
 import requests, jwt
 from backend_django.settings  import SECRET_KEY
 from django.contrib.auth import authenticate, login, logout
@@ -240,6 +242,18 @@ class LogOut(APIView):
         logout(request)
 
         return Response(status=status.HTTP_200_OK)
+    
+# 탈퇴
+class Leave(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        request.user.delete()
+        logout(request)
+
+        return Response(status=status.HTTP_200_OK)
+    
+
 
 # 프론트로 UserSerializer 보낼 때 사용 (유저 정보 보낼 때)
 class decode(APIView):
@@ -247,7 +261,42 @@ class decode(APIView):
 
     def get(self, request):
         user = request.user
-        serializer = UserSerializer(user)  # User 객체를 직렬화
+        student_serializer = UserSerializer(user)  # User 객체를 직렬화
+        student_chatResult = ConsultResult.objects.filter(member_id=user) 
+        result_serializer = ResultSerializer(student_chatResult, many=True) #접근한 학생의 상담 결과를 직렬화
 
-        print(serializer)
-        return Response(serializer.data)
+        print(result_serializer)
+
+        data = {
+            'student' : student_serializer.data,
+            'consult_result' : result_serializer.data
+        }
+
+        return JsonResponse(data)
+    
+
+# 별명 중복확인
+class exist(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        print(request.data)
+        username = request.data.get('nickname')
+        print(username)
+        if User.objects.filter(username=username).exists(): #아이디 중복 체크 
+            print("이미 존재하는 계정")
+            return Response(status=200)
+        else:
+            print("존재하지않는 별명")
+            return Response(status=201)
+        
+        # student_serializer = UserSerializer(user)  # User 객체를 직렬화
+        # student_chatResult = ConsultResult.objects.filter(member_id=user) 
+        # result_serializer = ResultSerializer(student_chatResult, many=True) #접근한 학생의 상담 결과를 직렬화
+
+        # data = {
+        #     'student' : student_serializer.data,
+        #     'consult_result' : result_serializer.data
+        # }
+
+        
