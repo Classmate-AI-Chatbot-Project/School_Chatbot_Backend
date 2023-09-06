@@ -8,6 +8,8 @@ urlpatterns = [
     path('naver/callback/', views.naver_login.as_view(), name='naver-login'),
     path('login/', views.Login.as_view()),
     path('logout/', views.LogOut.as_view()),
+    path('leave/', views.Leave.as_view()),
     path('signup/', views.SignUp.as_view()),
     path('decode/', views.decode.as_view()),
+    path('account_exist/', views.exist.as_view()),
 ]
