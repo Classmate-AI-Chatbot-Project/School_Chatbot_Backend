@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.utils.safestring import mark_safe
 import json
-from django.http import Http404
+from django.http import Http404, HttpResponse, JsonResponse
 from django.db.models import Q
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
@@ -12,54 +12,61 @@ from .models import ConsultRoom, ConsultMessage, Notification
 from account.models import User
 from chat.models import ConsultResult
 
-# /consult : [상담 신청하기/상담하기] 버튼 + 상담 채팅방 목록 페이지
-# 상담 목록 페이지 : 학생은 선생님과의 채팅방 1개, 선생님은 여러 학생들과의 채팅방 n개 표시
+# /consult/list (장고 테스트 페이지: /consult)
+# 상담 대화방 목록 페이지 : 학생은 선생님과의 채팅방 1개, 선생님은 여러 학생들과의 채팅방 n개 표시
 def index(request):
     user = request.user
     consult_room_items = []     # 채팅방 list items
     is_student = user.job == 1
     
-    if is_student:  # 학생인 경우
-        consult_rooms = ConsultRoom.objects.filter(student=user)
-    else:  # 선생님인 경우
-        consult_rooms = ConsultRoom.objects.filter(teacher=user)
+    if request.method == 'GET':
+        if is_student:  # 학생인 경우
+            consult_rooms = ConsultRoom.objects.filter(student=user)
+        else:  # 선생님인 경우
+            consult_rooms = ConsultRoom.objects.filter(teacher=user)
 
-    for consult_room in consult_rooms:
-        # 학생이면 상담 선생님, 선생님이면 상담 학생들 정보 가져오기
-        other_user = consult_room.teacher if is_student else consult_room.student
+        for consult_room in consult_rooms:
+            # 학생이면 상담 선생님, 선생님이면 상담 학생들 정보 가져오기
+            other_user = consult_room.teacher if is_student else consult_room.student
         
-        # 학생(들)의 최신 ConsultResult 가져오기
-        if is_student:
-            consult_results = ConsultResult.objects.filter(member_id=user).order_by('-result_time')[:1]
-        else:
-            consult_results = ConsultResult.objects.filter(member_id=other_user).order_by('-result_time')[:1]
-        
-        # 학생의 챗봇 상담 결과가 존재하면 
-        if consult_results.exists():
-            recent_consult_result = consult_results[0]
-
-            # Check if there are unread notifications for this user in the room
-            if consult_room.has_unread_notification(user):
-                is_unread = True
+            # 학생(들)의 최신 ConsultResult 가져오기
+            if is_student:
+                consult_results = ConsultResult.objects.filter(member_id=user).order_by('-result_time')[:1]
             else:
-                is_unread = False 
+                consult_results = ConsultResult.objects.filter(member_id=other_user).order_by('-result_time')[:1]
+         
+            # 학생의 챗봇 상담 결과가 존재하면 
+            if consult_results.exists():
+                recent_consult_result = consult_results[0]
+
+                # Check if there are unread notifications for this user in the room
+                if consult_room.has_unread_notification(user):
+                    is_read = False
+                else:
+                    is_read = True 
+
+                # 각 채팅방의 최신 메시지 내용 가져오기
+                latest_message = ConsultMessage.objects.filter(room_id=consult_room).latest('timestamp')
+                latest_message_content = latest_message.content
+                latest_message_time = latest_message.timestamp
             
-            # 상담 채팅방 목록 item에 표시할 json 데이터 전달
-            consult_room_items.append({
-                'user_profile': other_user.profile_photo.url,
-                'username': other_user.username,
-                'emotion_temp': recent_consult_result.emotion_temp,
-                'category': recent_consult_result.category,
-                'result_time': recent_consult_result.result_time.strftime('%Y년 %m월 %d일'),
-                'room_id': consult_room.room_id,
-                'student_id': user.id if is_student else other_user.id,
-                'is_unread': is_unread,  # 알림 확인 상태 전달
-            })
+                # 상담 채팅방 목록 item에 표시할 json 데이터 전달
+                consult_room_items.append({
+                    'username': other_user.username,
+                    'user_profile': other_user.profile_photo.url,
+                    'emotion_temp': recent_consult_result.emotion_temp,
+                    'latest_message_content': latest_message_content,
+                    'latest_message_time': latest_message_time,
+                    'room_id': consult_room.room_id,
+                    'student_id': user.id if is_student else other_user.id,
+                    'is_read': is_read,  # 알림 확인 상태 전달
+                })
 
-    context = {'consult_room_items': consult_room_items}
-    return render(request, 'consult/index.html', context)
-        # 테스트: index.html로 이동 => Frontend에 적용할 때는 상담 채팅방 목록 페이지 url로 이동하도록 수정하기
-
+        return JsonResponse({'consult_rooms': consult_room_items})
+    
+        # 장고 테스트 페이지(/consult)로 이동하려면 위 문장 주석처리 & 아래 주석 풀기 & consult/urls.py 맨 윗문장 주석 풀기
+        # context = {'consult_room_items': consult_room_items}
+        # return render(request, 'consult/index.html', context)
 
 @login_required     
 def create_or_redirect_room(request):   # [상담 신청하기] 버튼을 누르면 새 채팅방 생성/기존 채팅방 이동
