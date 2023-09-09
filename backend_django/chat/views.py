@@ -24,6 +24,21 @@ from account.models import User
 # 로그인 안 한 상태 => '로그인이 필요합니다' 모달창 띄우기
 # 로그인 한 상태 => 새로운 채팅방 생성하기 & 로그인한 user.id와 생성한 채팅방 id를 url에 전달하기
 '''
+@login_required
+def create_chatroom_and_redirect(request):
+    if request.method == 'POST':
+        # ChatRoom을 생성하고 chatroom_id를 받기 위해 student_id를 사용
+        student_id = request.user
+
+        # ChatRoom을 생성
+        chat_room = ChatRoom.objects.create(student_id=student_id)
+
+        # 생성된 ChatRoom의 chat_id를 JSON 응답으로 반환
+        response_data = {'chat_id': chat_room.chat_id}
+        # ChatRoom을 생성한 후 ChatRoom의 URL로 리디렉션
+        chatroom_url = f'/chat/{student_id.id}/{chat_room.chat_id}/'
+        return JsonResponse({'chatroom_url': chatroom_url})
+    
 @login_required           
 def chat_service(request, user_id, chatroom_id):  # URL에 포함된 값을 전달받음 (ex: /chat/1/1/)
     # 현재 로그인한 사용자
@@ -65,8 +80,8 @@ def chat_service(request, user_id, chatroom_id):  # URL에 포함된 값을 전�
             output = {'response': response}  # JSON 응답 생성
             return JsonResponse(output, status=200)
         
-        else:
-            return render(request, 'chat/index.html', context)
+    else:
+        return render(request, 'chat/index.html', context)
 
 # chat/end/<str:user_id>/<int:chatroom_id>/  
 def chat_end(request, user_id, chatroom_id):
