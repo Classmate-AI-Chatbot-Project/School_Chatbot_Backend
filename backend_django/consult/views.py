@@ -136,16 +136,16 @@ def create_consult_request_message(room, author, content):
         consult_room=room
     )
 
-# 선생님이 학생 프로필 페이지(/teacher/detail/<str:student_id>)에서 [상담하기] 버튼을 누르면 기존 상담방으로 이동
+# 선생님이 학생 프로필 페이지(/teacher/detail/<str:student_email>)에서 [상담하기] 버튼을 누르면 기존 상담방으로 이동
 @login_required
-def teacher_start_consult(request, student_id):
+def teacher_start_consult(request, student_email):
     user = request.user
     is_teacher = user.job == 0
 
     if request.method == 'POST':
         if is_teacher:
             # 프로필 url에서 학생 정보 가져오기
-            student = User.objects.get(email=student_id, job=1)
+            student = User.objects.get(email=student_email, job=1)
 
             # 상담 채팅방 찾기: 학생과 선생님이 이미 채팅한 방이 있는지 확인
             existing_room = ConsultRoom.objects.filter(
