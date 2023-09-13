@@ -69,16 +69,13 @@ def index(request):         # /consult/list (장고 테스트 페이지: /consul
         # context = {'consult_room_items': consult_room_items}
         # return render(request, 'consult/index.html', context)
 
-
 # 학생이 [상담 신청하기] 버튼을 누르면 새 채팅방 생성/기존 채팅방 이동 => 상담 신청 메시지 전송
 @login_required     
-def student_create_or_redirect_room(request):   # /consult/create
+def student_request_consult(request):   # /consult/request_consult
     user = request.user
     is_student = user.job == 1      # Check if the user is a student or a teacher
-
-    if request.method == 'POST':
-        # 학생이면 상담 신청 메시지 전송하기
-        if is_student:  
+    if is_student:
+        if request.method == 'POST':    # 상담 신청 메시지 전송하기
             # find a teacher with the same school
             teacher = User.objects.filter(job=0, school=user.school).first()
             if not teacher:
@@ -111,10 +108,9 @@ def student_create_or_redirect_room(request):   # /consult/create
                 create_consult_request_message(new_room, user, message_content)
                 return HttpResponseRedirect(reverse('consult:room', args=[new_room.room_id, user.id]))
                     # return redirect('consult:room', room_name = new_room.room_id, student_id=user.id) 
-    
-    # POST 요청 외의 경우에는 None 대신 HttpResponse 반환
-    return HttpResponse(status=200)
-
+        
+        # Return an HTTP response in case of GET request
+        return HttpResponse(status=200)
 
 def create_consult_request_message(room, author, content):
     # JSON 데이터를 문자열로 변환하여 content 필드에 저장
@@ -135,6 +131,32 @@ def create_consult_request_message(room, author, content):
         receiver=receiver,
         consult_room=room
     )
+
+# 학생이 사이드바에서 [선생님과 상담하기] 누르면 기존 채팅방으로 이동    
+@login_required
+def consult_with_teacher(request):  # /consult/redirect_room  
+    user = request.user
+    is_student = user.job == 1  # Check if the user is a student
+
+    if is_student:
+        if request.method == 'GET':
+            # Find a teacher with the same school
+            teacher = User.objects.filter(job=0, school=user.school).first()
+            if not teacher:
+                raise Http404("No teacher available for this student's school.")
+
+            # Check if there is an existing consultation room between the student and teacher
+            existing_room = ConsultRoom.objects.filter(
+                Q(student=user, teacher=teacher) | Q(student=teacher, teacher=user)
+            ).first()
+
+            if existing_room:
+                # If an existing room exists, redirect to the room
+                return HttpResponseRedirect(reverse('consult:room', args=[existing_room.room_id, user.id]))
+            else:
+                # If no room exists, create a new consultation room and redirect to it
+                new_room = ConsultRoom.objects.create(student=user, teacher=teacher)
+                return HttpResponseRedirect(reverse('consult:room', args=[new_room.room_id, user.id]))
 
 # 선생님이 학생 프로필 페이지(/teacher/detail/<str:student_email>)에서 [상담하기] 버튼을 누르면 기존 상담방으로 이동
 @login_required
@@ -258,4 +280,5 @@ def room(request, room_name, student_id):   # room/<int:room_name>/student/<int:
             'timestamp': message.timestamp,
         }
         return JsonResponse({'new_message': new_message_data}, status=200)
+    
     
