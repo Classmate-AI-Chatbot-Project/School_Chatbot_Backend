@@ -5,7 +5,6 @@ from account.models import User
 
 class ConsultRoom(models.Model):
     room_id = models.AutoField(primary_key=True)     # room id
-    # user_id = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='consult_student', null=True)
     teacher = models.ForeignKey(User, on_delete=models.CASCADE, related_name='consult_teacher', null=True)      
     created_at = models.DateTimeField(auto_now_add=True) 
@@ -29,7 +28,6 @@ class ConsultRoom(models.Model):
 class ConsultMessage(models.Model):
     message_id = models.AutoField(primary_key=True)
     room_id = models.ForeignKey(ConsultRoom, on_delete=models.CASCADE, null=True)
-    # sender = models.CharField(max_length=30, choices=(('student', '학생'), ('teacher', '선생님')))
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='author_messages', null=True)
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)     # 처음 생성 일시만 자동 기록
@@ -39,7 +37,7 @@ class ConsultMessage(models.Model):
         return f'ConsultMessage[{self.message_id}] {self.content} by {self.author.username} in {self.room_id}'
     
     def last_all_messages(self, room_id):
-        return ConsultMessage.objects.filter(room_id=room_id).order_by('timestamp').all()  # .all()[:20] 지난 20개 메시지 preload
+        return ConsultMessage.objects.filter(room_id=room_id).order_by('timestamp').all()
 
 # 새로운 메시지(상담 신청 포함) 전송 시 알림 모델 생성
 class Notification(models.Model):
