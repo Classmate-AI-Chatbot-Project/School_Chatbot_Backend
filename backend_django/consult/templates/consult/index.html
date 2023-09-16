@@ -10,7 +10,7 @@
     <!-- Frontend 적용: 
     1) 학생이 챗봇 분석 결과 페이지 하단의 [상담 신청하기] 버튼을 누르면 새로운 ConsultRoom 생성 / 기존 ConsultRoom 이동 & 상담 신청 메시지 전송
     2) 선생님은 학생 프로필 페이지의 [상담하기] 버튼을 누르면 기존 ConsultRoom으로 이동 -->
-    <form id="create-room-form" action="{% url 'consult:create_or_redirect_room' %}" method="post">
+    <form id="create-room-form" action="{% url 'consult:student_create_or_redirect_room' %}" method="post">
         {% csrf_token %}
         <input type="submit" value="상담 신청하기(학생) / 상담하기(선생님)">
     </form>
@@ -24,7 +24,7 @@
         <p>{{ item.username }}</p>
         <p>감정 온도: {{ item.emotion_temp }}</p>
         <p>최신 메시지: {{ item.latest_message_content }}</p>
-        <p>결과 시간: {{ item.result_time }}</p>
+        <p>수신 시간: {{ item.latest_message_time }}</p>
         
         <!-- 새 메시지가 왔을 때 생성된 알림이 안 읽은 상태면 new 표시
         new 표시가 뜬 채팅방을 클릭해 채팅방으로 들어가면 new 표시가 사라짐 -->
