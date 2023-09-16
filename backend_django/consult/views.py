@@ -15,6 +15,7 @@ from .models import ConsultRoom, ConsultMessage, Notification
 from account.models import User
 from chat.models import ConsultResult
 
+
 # 상담 대화방 목록 페이지 : 학생은 선생님과의 채팅방 1개, 선생님은 여러 학생들과의 채팅방 n개 표시
 def index(request):         # /consult/list (장고 테스트 페이지: /consult)
     user = request.user
@@ -83,16 +84,17 @@ def student_request_consult(request):   # /consult/request_consult
 
             # 가장 최근 ConsultResult 데이터 가져와 상담 신청 메시지(json) 구성
             consult_result = ConsultResult.objects.filter(member_id=user).latest('result_time')
-            message_content = {
-                'category': consult_result.category,
-                'emotion_temp': consult_result.emotion_temp,
-                'result_time': consult_result.result_time.strftime('%Y년 %m월 %d일'),
-            }
-            # message_content = "상담을 신청해요.\n"
-            # message_content += f"키워드: {consult_result.category}\n"
-            # message_content += f"감정 온도: {consult_result.emotion_temp}도\n"
-            # message_content += f"챗봇 상담 시간: {consult_result.result_time.strftime('%Y년 %m월 %d일')}\n"
-
+            # message_content = {
+            #     'category': consult_result.category,
+            #     'emotion_temp': consult_result.emotion_temp,
+            #     'result_time': consult_result.result_time.strftime('%Y년 %m월 %d일'),
+            # }
+            message_content = ""
+            message_content += f"{consult_result.emotion_temp}/n"
+            message_content += f"{consult_result.category}/n"
+            message_content += f"{consult_result.result_time.strftime('%Y년 %m월 %d일')}/n"
+            message_content += f"{consult_result.chat_id}/n"
+        
             # 기존 상담방/새 상담방으로 이동 => 상담 신청 메시지 전송
             existing_room = ConsultRoom.objects.filter(
                 Q(student=user, teacher=teacher) | Q(student=teacher, teacher=user)
@@ -114,7 +116,7 @@ def student_request_consult(request):   # /consult/request_consult
 
 def create_consult_request_message(room, author, content):
     # JSON 데이터를 문자열로 변환하여 content 필드에 저장
-    message_content_str = json.dumps(content)
+    message_content_str = json.dumps(content, ensure_ascii=False)
 
     # 새로운 상담 신청 메시지 생성
     ConsultMessage.objects.create(
@@ -152,11 +154,15 @@ def consult_with_teacher(request):  # /consult/redirect_room
 
             if existing_room:
                 # If an existing room exists, redirect to the room
-                return HttpResponseRedirect(reverse('consult:room', args=[existing_room.room_id, user.id]))
+                #return HttpResponseRedirect(reverse('consult:room', args=[existing_room.room_id, user.id]))
+                consult_room_url =f'/consult/room/{existing_room.room_id}/student/{user.id}/'
+                return JsonResponse({'consult_room_url': consult_room_url})
             else:
                 # If no room exists, create a new consultation room and redirect to it
                 new_room = ConsultRoom.objects.create(student=user, teacher=teacher)
-                return HttpResponseRedirect(reverse('consult:room', args=[new_room.room_id, user.id]))
+                #return HttpResponseRedirect(reverse('consult:room', args=[new_room.room_id, user.id]))
+                consult_room_url =f'/consult/room/{new_room.room_id}/student/{user.id}/'
+                return JsonResponse({'consult_room_url': consult_room_url})
 
 # 선생님이 학생 프로필 페이지(/teacher/detail/<str:student_email>)에서 [상담하기] 버튼을 누르면 기존 상담방으로 이동
 @login_required
@@ -221,14 +227,15 @@ def room(request, room_name, student_id):   # room/<int:room_name>/student/<int:
 
         # 새로 받은 새 메시지 + 지난 모든 메시지들 가져오기
         messages = ConsultMessage.objects.filter(room_id=consult_room).order_by('timestamp').all()
-        last_messages = serializers.serialize("json", messages)  # QuerySet을 JSON으로 직렬화
-        # messages_data = []
-        # for message in messages:
-        #     messages_data.append({
-        #         'author': message.author.username,
-        #         'content': message.content,
-        #         'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-        #     })
+        #last_messages = serializers.serialize("json", messages)  # QuerySet을 JSON으로 직렬화
+        messages_data = []
+        for message in messages:
+            messages_data.append({
+                'author': message.author.username,
+                'content': message.content,
+                'timestamp': message.timestamp.strftime('%H:%M'),
+                'request': message.is_consult_request,
+            })
 
         consultRoomData = {
             'room_id_json': mark_safe(json.dumps(room_id)),
@@ -239,7 +246,7 @@ def room(request, room_name, student_id):   # room/<int:room_name>/student/<int:
             'other_user_profile': other_user_profile,   # 상대방 프로필 사진
             'teacher_school': teacher_school,           # 선생님 학교
             'student_profile_id': student_profile_id,   # 학생 프로필 페이지 url 속 student_id(email)
-            'last_messages': last_messages,               # 지난 모든 메시지들
+            'last_messages': messages_data,               # 지난 모든 메시지들
             'has_new_consult_result': has_new_consult_result,   # 새 상담 신청 메시지가 있으면...
             # 최근 상담 신청 메시지 데이터
             'category': consult_result.category,                   # 키워드
@@ -280,5 +287,3 @@ def room(request, room_name, student_id):   # room/<int:room_name>/student/<int:
             'timestamp': message.timestamp,
         }
         return JsonResponse({'new_message': new_message_data}, status=200)
-    
-    
