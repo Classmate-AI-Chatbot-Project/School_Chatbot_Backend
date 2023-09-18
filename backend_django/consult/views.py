@@ -125,6 +125,13 @@ def create_consult_request_message(room, author, content):
         is_consult_request=True,
         content=message_content_str      # Frontend: JSON.parse해서 데이터 추출하기       
     )
+
+    ConsultMessage.objects.create(
+        author=author,
+        room_id=room,
+        is_consult_request=True,
+        content="상담을 신청해요."    # Frontend: JSON.parse해서 데이터 추출하기       
+    )
     # 알림 생성
     is_student = author.job == 1
     receiver = room.teacher if is_student else room.student
