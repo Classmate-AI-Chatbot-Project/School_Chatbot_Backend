@@ -36,11 +36,12 @@ def get_wordcloud_data(student_dialogs):
     word_dict = {v: k for k, v in vectorizer.vocabulary_.items()}
     
     top_keywords = []
-    top_indices = tfidf.toarray().argsort()[0][::-1][:6]
+    top_indices = tfidf.toarray().argsort()[0][::-1]
     for index in top_indices:
         top_keywords.append(word_dict[index])
 
     keywords_text = ' '.join(top_keywords)
 
-    wordcloud = WordCloud(font_path=font_path,  background_color='white', color_func = color_func, width=800, height=800).generate(keywords_text)
+    wordcloud = WordCloud(font_path=font_path, background_color='white', collocations=False, width=800, height=800).generate(keywords_text)
+
     return wordcloud
