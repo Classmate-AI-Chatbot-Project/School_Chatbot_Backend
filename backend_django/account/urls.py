@@ -12,4 +12,6 @@ urlpatterns = [
     path('signup/', views.SignUp.as_view()),
     path('decode/', views.decode.as_view()),
     path('account_exist/', views.exist.as_view()),
+    path('edit/', views.EditProfile.as_view()),
+    path('check-nickname-availability/', views.check_nickname_availability, name='check-nickname-availability'),
 ]
