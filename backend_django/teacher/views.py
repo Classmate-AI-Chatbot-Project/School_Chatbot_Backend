@@ -9,6 +9,7 @@ from teacher.serializers import ResultSerializer, ResultListSerializer
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 import json
+from django.db.models import Count
 
 from .drawingtest import visualize_detection_results, get_prediction
 
@@ -21,7 +22,17 @@ import base64
 # 선생님의 학생 리스트
 def studentList(request):  
     user = request.user
-    student_list = User.objects.filter(school=user.school, job=1)
+    from django.db.models import F, Max
+
+    from django.db.models import Max
+
+    student_list = User.objects.filter(
+        school=user.school, job=1, consultresult__isnull=False
+    ).annotate(
+        latest_consult_date=Max('consultresult__result_time')
+    ).order_by('-latest_consult_date')
+
+
     if request.method == 'GET':
         print(student_list)
         serializer = StudentListSerializer(student_list, many=True)
