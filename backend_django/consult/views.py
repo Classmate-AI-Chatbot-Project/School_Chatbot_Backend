@@ -170,7 +170,7 @@ def teacher_start_consult(request, student_email):
     user = request.user
     is_teacher = user.job == 0
 
-    if request.method == 'POST':
+    if request.method == 'GET':
         if is_teacher:
             # 프로필 url에서 학생 정보 가져오기
             student = User.objects.get(email=student_email, job=1)
@@ -182,13 +182,17 @@ def teacher_start_consult(request, student_email):
 
             if existing_room:
                 # 이미 채팅한 방이 있으면 해당 방으로 이동
-                return HttpResponseRedirect(reverse('consult:room', args=[existing_room.room_id, user.id]))
+                #return HttpResponseRedirect(reverse('consult:room', args=[existing_room.room_id, user.id]))
                     # return redirect('consult:room', room_name=existing_room.room_id, student_id=student.id)
+                consult_room_url =f'/consult/room/{existing_room.room_id}/student/{student.id}/'
+                return JsonResponse({'consult_room_url': consult_room_url})
             else:
                 # 없으면 새로운 채팅방 생성 후 이동
                 new_room = ConsultRoom.objects.create(student=student, teacher=user)
-                return HttpResponseRedirect(reverse('consult:room', args=[new_room.room_id, user.id]))
+                #return HttpResponseRedirect(reverse('consult:room', args=[new_room.room_id, user.id]))
                     # return redirect('consult:room', room_name=new_room.room_id, student_id=student.id)
+                consult_room_url =f'/consult/room/{new_room.room_id}/student/{student.id}/'
+                return JsonResponse({'consult_room_url': consult_room_url})
         
 
 @login_required 
@@ -234,6 +238,7 @@ def room(request, room_name, student_id):   # room/<int:room_name>/student/<int:
                 'author': message.author.username,
                 'content': message.content,
                 'timestamp': message.timestamp.strftime('%H:%M'),
+                'date': message.timestamp.strftime('%Y년 %m월 %d일'),
                 'request': message.is_consult_request,
             })
 
