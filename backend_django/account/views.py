@@ -2,17 +2,25 @@ from django.views import View
 from django.http import HttpResponse, JsonResponse
 from rest_framework import status
 from django.core.files.base import ContentFile
+from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import UserSerializer
 from rest_framework.permissions import IsAuthenticated
+from .models import User
 from account.models import User
 from chat.models import ConsultResult
 from teacher.serializers import ResultSerializer
 import requests, jwt
 from backend_django.settings  import SECRET_KEY
 from django.contrib.auth import authenticate, login, logout
-import urllib.parse
+from django.core.files import File
+from PIL import Image
+from django.http import JsonResponse
+from PIL import Image
+from io import BytesIO
+import base64
+import os
 
 # Create your views here.
 
@@ -299,4 +307,46 @@ class exist(APIView):
         #     'consult_result' : result_serializer.data
         # }
 
-        
+class EditProfile(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        try:
+            user = request.user
+            new_profile_data = request.data
+
+            user.username = new_profile_data.get('username', user.username)
+            user.school = new_profile_data.get('school', user.school)
+            user.job = new_profile_data.get('job', user.job)
+            profile_photo = new_profile_data.get('profile_photo')  # 이미지 파일
+            print(profile_photo)
+
+            if "media" not in profile_photo:
+                print("if문 안입니다.")
+                _, data = profile_photo.split(',', 1)
+                image_data = base64.b64decode(data)
+
+                # 이미지를 Pillow Image 객체로 변환
+                image = Image.open(BytesIO(image_data))
+                
+                image.save(f'media/{user.email}.png', 'PNG')
+                user.profile_photo = f'{user.email}.png'
+
+            user.save()
+
+            return Response(status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def check_nickname_availability(request):
+    nickname = request.data.get('nickname')
+
+    # 닉네임이 이미 사용 중인지 확인합니다.
+    if User.objects.filter(username=nickname).exists():
+        # 이미 사용 중인 경우
+        return Response({'available': False}, status=status.HTTP_200_OK)
+    else:
+        # 사용 가능한 경우
+        return Response({'available': True}, status=status.HTTP_200_OK)
