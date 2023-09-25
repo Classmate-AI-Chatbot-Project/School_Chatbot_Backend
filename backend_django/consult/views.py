@@ -15,7 +15,28 @@ from .models import ConsultRoom, ConsultMessage, Notification
 from account.models import User
 from chat.models import ConsultResult
 
+# topbar, sidebar에 새 메시지 알림 전달
+@login_required
+def check_unread_messages(request):
+    # 현재 로그인한 사용자(수신자)의 미확인 메시지 있는지 확인
+    user = request.user
+    is_student = user.job == 1
 
+    if request.method == 'GET':
+        is_unread = False  # 초기값 설정
+
+        if is_student:  # 학생인 경우
+            consult_rooms = ConsultRoom.objects.filter(student=user)
+        else:  # 선생님인 경우
+            consult_rooms = ConsultRoom.objects.filter(teacher=user)
+
+        # 하나 이상의 consult_room에 새 메시지가 있으면 True로 설정
+        for consult_room in consult_rooms:
+            if consult_room.has_unread_notification(user):
+                is_unread = True
+        
+        return JsonResponse({'is_unread': is_unread})   # is_unread=True 면 안 읽은 메시지 있음
+        
 # 상담 대화방 목록 페이지 : 학생은 선생님과의 채팅방 1개, 선생님은 여러 학생들과의 채팅방 n개 표시
 def index(request):         # /consult/list (장고 테스트 페이지: /consult)
     user = request.user
@@ -82,7 +103,7 @@ def student_request_consult(request):   # /consult/request_consult
             if not teacher:
                 raise Http404("No teacher available for this student's school.")
 
-            # 가장 최근 ConsultResult 데이터 가져와 상담 신청 메시지(json) 구성
+            # 가장 최근 ConsultResult 데이터 가져와 상담 신청 메시지 구성
             consult_result = ConsultResult.objects.filter(member_id=user).latest('result_time')
             # message_content = {
             #     'category': consult_result.category,
@@ -104,13 +125,11 @@ def student_request_consult(request):   # /consult/request_consult
             if existing_room:
                 create_consult_request_message(existing_room, user, message_content)
                 return HttpResponseRedirect(reverse('consult:room', args=[existing_room.room_id, user.id]))
-                    # return redirect('consult:room', room_name = existing_room.room_id, student_id=user.id)
             else:
                 new_room = ConsultRoom.objects.create(student=user, teacher=teacher)
                 create_consult_request_message(new_room, user, message_content)
                 return HttpResponseRedirect(reverse('consult:room', args=[new_room.room_id, user.id]))
-                    # return redirect('consult:room', room_name = new_room.room_id, student_id=user.id) 
-        
+
         # Return an HTTP response in case of GET request
         return HttpResponse(status=200)
 
@@ -161,13 +180,11 @@ def consult_with_teacher(request):  # /consult/redirect_room
 
             if existing_room:
                 # If an existing room exists, redirect to the room
-                #return HttpResponseRedirect(reverse('consult:room', args=[existing_room.room_id, user.id]))
                 consult_room_url =f'/consult/room/{existing_room.room_id}/student/{user.id}/'
                 return JsonResponse({'consult_room_url': consult_room_url})
             else:
                 # If no room exists, create a new consultation room and redirect to it
                 new_room = ConsultRoom.objects.create(student=user, teacher=teacher)
-                #return HttpResponseRedirect(reverse('consult:room', args=[new_room.room_id, user.id]))
                 consult_room_url =f'/consult/room/{new_room.room_id}/student/{user.id}/'
                 return JsonResponse({'consult_room_url': consult_room_url})
 
@@ -189,15 +206,11 @@ def teacher_start_consult(request, student_email):
 
             if existing_room:
                 # 이미 채팅한 방이 있으면 해당 방으로 이동
-                #return HttpResponseRedirect(reverse('consult:room', args=[existing_room.room_id, user.id]))
-                    # return redirect('consult:room', room_name=existing_room.room_id, student_id=student.id)
                 consult_room_url =f'/consult/room/{existing_room.room_id}/student/{student.id}/'
                 return JsonResponse({'consult_room_url': consult_room_url})
             else:
                 # 없으면 새로운 채팅방 생성 후 이동
                 new_room = ConsultRoom.objects.create(student=student, teacher=user)
-                #return HttpResponseRedirect(reverse('consult:room', args=[new_room.room_id, user.id]))
-                    # return redirect('consult:room', room_name=new_room.room_id, student_id=student.id)
                 consult_room_url =f'/consult/room/{new_room.room_id}/student/{student.id}/'
                 return JsonResponse({'consult_room_url': consult_room_url})
         
@@ -251,7 +264,7 @@ def room(request, room_name, student_id):   # room/<int:room_name>/student/<int:
 
         consultRoomData = {
             'room_id_json': mark_safe(json.dumps(room_id)),
-            # Frontend: 선생님 프로필 사진 클릭 => 모달창 팝업 / 학생 프로필 사진 클릭 => 프로필 페이지 url로 이동하기
+            # Frontend: 프로필 사진 클릭 => 모달창 팝업
             'username': user.username,                  # 현재 로그인한 사용자
             'other_username': other_user.username,      # 대화 상대방
             'user_profile': user_profile,               # 사용자 프로필 사진
@@ -264,11 +277,8 @@ def room(request, room_name, student_id):   # room/<int:room_name>/student/<int:
             'category': consult_result.category,                   # 키워드
             'emotion_temp': consult_result.emotion_temp,           # 우울도(depression_count)
             'result_time': consult_result.result_time.strftime('%Y년 %m월 %d일'),
-
         }
         return JsonResponse({'consult_room_data': consultRoomData})
-        # 장고: 상담 채팅방에 표시할 데이터를 json 형태로 consult/room.html에 전달
-        # return render(request, "consult/room.html", consultRoomData)
 
     # 상담 대화방에서 메시지 전송
     if request.method == 'POST':

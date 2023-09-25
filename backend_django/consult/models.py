@@ -23,7 +23,8 @@ class ConsultRoom(models.Model):
             receiver=user,
             is_read=False
         )
-        unread_notifications.update(is_read=True)
+        for notification in unread_notifications:
+            notification.mark_as_read()
     
 class ConsultMessage(models.Model):
     message_id = models.AutoField(primary_key=True)
