@@ -1,15 +1,11 @@
 # consult/views.py
 
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, render
 from django.utils.safestring import mark_safe
 import json
 from django.http import Http404, HttpResponseRedirect, JsonResponse, HttpResponse
 from django.urls import reverse
 from django.db.models import Q
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
-from django.core import serializers
 from django.utils import timezone
 from .models import ConsultRoom, ConsultMessage, Notification
 from account.models import User
@@ -24,18 +20,25 @@ def check_unread_messages(request):
 
     if request.method == 'GET':
         is_unread = False  # 초기값 설정
+        has_new_consult_result = False
 
         if is_student:  # 학생인 경우
             consult_rooms = ConsultRoom.objects.filter(student=user)
         else:  # 선생님인 경우
             consult_rooms = ConsultRoom.objects.filter(teacher=user)
 
-        # 하나 이상의 consult_room에 새 메시지가 있으면 True로 설정
         for consult_room in consult_rooms:
+            # 하나 이상의 consult_room에 새 상담 메시지가 있으면 True
             if consult_room.has_unread_notification(user):
                 is_unread = True
-        
-        return JsonResponse({'is_unread': is_unread})   # is_unread=True 면 안 읽은 메시지 있음
+
+            # 상담방에 참가한 학생의 최신 ConsultResult가 안 읽은 상태면 True (새 상담 결과 있음)
+            student_id = consult_room.student
+            consult_result = ConsultResult.objects.filter(member_id=student_id).latest('result_time') 
+            if consult_result and not consult_result.is_read:
+                has_new_consult_result = True
+            
+        return JsonResponse({'is_unread': is_unread, 'has_new_result': has_new_consult_result})   # is_unread=True 면 안 읽은 메시지 있음
         
 # 상담 대화방 목록 페이지 : 학생은 선생님과의 채팅방 1개, 선생님은 여러 학생들과의 채팅방 n개 표시
 def index(request):         # /consult/list (장고 테스트 페이지: /consult)
