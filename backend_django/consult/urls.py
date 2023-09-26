@@ -6,6 +6,7 @@ from . import views
 app_name = 'consult'
 
 urlpatterns = [
+    path('check_unread_messages/', views.check_unread_messages, name='check_unread_messages'),  # topbar, sidebar에 새 메시지 알림
     # path("", views.index, name="index"),        # 상담 대화방 목록 (장고 테스트 페이지)
     path("list/", views.index, name="index"),    # 상담 대화방 목록 (프론트 연결)
     path('redirect_room/', views.consult_with_teacher, name='create_consult_with_teacher'),  # 사이드바 버튼
