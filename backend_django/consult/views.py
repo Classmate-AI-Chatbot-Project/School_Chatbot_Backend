@@ -102,7 +102,7 @@ def student_request_consult(request):   # /consult/request_consult
     if is_student:
         if request.method == 'POST':    # 상담 신청 메시지 전송하기
             # find a teacher with the same school
-            teacher = User.objects.filter(job=0, school=user.school).first()
+            teacher = User.objects.filter(job=0, school_code=user.school_code).first()
             if not teacher:
                 raise Http404("No teacher available for this student's school.")
 
@@ -172,7 +172,7 @@ def consult_with_teacher(request):  # /consult/redirect_room
     if is_student:
         if request.method == 'GET':
             # Find a teacher with the same school
-            teacher = User.objects.filter(job=0, school=user.school).first()
+            teacher = User.objects.filter(job=0, school_code=user.school_code).first()
             if not teacher:
                 raise Http404("No teacher available for this student's school.")
 
@@ -250,7 +250,7 @@ def room(request, room_name, student_id):   # room/<int:room_name>/student/<int:
             
         user_profile = user.profile_photo.url
         other_user_profile = other_user.profile_photo.url
-        teacher_school = other_user.school          # 학생, 선생님 모두 같은 학교임
+        teacher_school = other_user.school_code          # 학생, 선생님 모두 같은 학교임
 
         # 새로 받은 새 메시지 + 지난 모든 메시지들 가져오기
         messages = ConsultMessage.objects.filter(room_id=consult_room).order_by('timestamp').all()
