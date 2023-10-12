@@ -1,5 +1,5 @@
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
-import torch, os
+import torch, os, math
 
 def load_model():
     # 모델 디렉토리 경로
@@ -55,8 +55,15 @@ def summary_para(text):
 # 요약문 생성
 def generate_summary(text):
     sentences = text.split("\n")  # 입력 텍스트를 문장으로 분리
-    batch_size = 5  # 5문장씩 처리할 배치 크기
+    print("sentences : ", sentences)
+    if(len(sentences)<=8):
+        batch_size = len(sentences)
+    elif(len(sentences)<=15):
+        batch_size = math.ceil(len(sentences)/2)
+    else:
+        batch_size = math.ceil(len(sentences)/3) 
     batched_sentences = [sentences[i:i + batch_size] for i in range(0, len(sentences), batch_size)]
+    print("batched_sentences :", batched_sentences)
 
     summary_texts = ''
 
