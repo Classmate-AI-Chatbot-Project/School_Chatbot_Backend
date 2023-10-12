@@ -27,7 +27,7 @@ def studentList(request):
     from django.db.models import Max
 
     student_list = User.objects.filter(
-        school=user.school, job=1, consultresult__isnull=False
+        school_code=user.school_code, job=1, consultresult__isnull=False
     ).annotate(
         latest_consult_date=Max('consultresult__result_time')
     ).order_by('-latest_consult_date')
@@ -127,7 +127,7 @@ def test_result(request):
     
 def resultList(request):  
     user = request.user
-    student_list = User.objects.filter(school=user.school, job=1)
+    student_list = User.objects.filter(school_code=user.school_code, job=1)
     result_list = ConsultResult.objects.filter(member_id__in=student_list)
     if request.method == 'GET':
         print(result_list)
