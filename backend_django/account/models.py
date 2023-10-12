@@ -39,6 +39,7 @@ class User(AbstractBaseUser):
     username         = models.CharField(max_length=45, unique=True, null=True)  # nickname
     email            = models.EmailField(max_length=200, unique=True)
     school           = models.CharField(max_length=200, null=True)
+    school_code      = models.CharField(max_length=200, null=True)
     job              = models.IntegerField(choices=((0, '선생님'), (1, '학생')), null=True)
     profile_photo    = models.ImageField(null=True)
     password         = models.CharField(max_length=200, default='')
