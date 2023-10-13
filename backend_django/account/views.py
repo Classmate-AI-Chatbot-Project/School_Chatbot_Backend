@@ -203,12 +203,15 @@ class SignUp(APIView):
     def put(self, request):
         nickname = request.data.get('nickname', None)
         school = request.data.get('school', None)
+        school_code = request.data.get('school_code', None)
+        print(school_code)
         job = request.data.get('job', None)
 
         user = request.user
 
         user.username = nickname
         user.school = school
+        user.school_code = school_code
         user.job = job
         user.save()
         return HttpResponse(status=200)
