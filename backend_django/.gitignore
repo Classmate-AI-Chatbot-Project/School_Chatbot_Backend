@@ -12,5 +12,4 @@ my_settings.py
 db.sqlite3
 db.sqlite3-journal
 media
-chat/result_model/
-chat/kogpt2_model/
+
