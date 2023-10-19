@@ -198,13 +198,13 @@ if os.getenv('GAE_APPLICATOIN', None):
             'NAME': 'schoollog_db',
             'USER': 'admin',
             'PASSWORD': '1234',
+	    'PORT': '3306',
         }
     }
-'''
 
 # 개인 로컬 MySQL DB와 연동
 # DATABASES = my_settings.DATABASES
-
+'''
 # 기본 SQLITE3
 DATABASES = {
     'default': {
