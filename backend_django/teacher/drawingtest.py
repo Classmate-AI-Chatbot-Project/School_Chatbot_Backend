@@ -2,7 +2,8 @@ import os
 from collections import defaultdict
 from google.cloud import automl_v1beta1
 from PIL import Image, ImageDraw
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = r'/tree-392720-f06af2faa92c.json'
+current_directory = os.path.dirname(__file__)
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.join(current_directory, 'tree-392720-f06af2faa92c.json')
 
 # 'content' is base-64-encoded image data.
 def get_prediction(content, project_id, model_id):
