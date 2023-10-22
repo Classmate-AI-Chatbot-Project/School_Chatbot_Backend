@@ -33,7 +33,7 @@ class kakao_login(APIView):
             data = {
                 "grant_type"    :"authorization_code",
                 "client_id"     :"2d9ed17578b0549eedac781a79515516",
-                "redirect_uri": "http://127.0.0.1:3000/account/kakao/callback",
+                "redirect_uri": "http://34.64.189.164:3000/account/kakao/callback",
                 "code": code
             }
 
@@ -86,7 +86,7 @@ class google_login(APIView):
 
             client_id = '793203864825-bgnnqpfmg3oseutieg9onr478j3hcroj.apps.googleusercontent.com'
             client_secret = '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'
-            redirect_uri = "http://127.0.0.1:3000/account/google/callback"
+            redirect_uri = "http://34.64.189.164:3000/account/google/callback"
             state = "random_string"
 
             # 액세스 토큰 교환
@@ -141,7 +141,7 @@ class naver_login(APIView):
 
             client_id = 'N2pHYJkFjc2tY4jtGNRE'
             client_secret = 'KVtGsWwUmH'
-            redirect_uri = "http://127.0.0.1:3000/account/naver/callback"
+            redirect_uri = "http://34.64.189.164:3000/account/naver/callback"
             naver_uri = 'https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&code=${code}'
 
             # 액세스 토큰 교환
