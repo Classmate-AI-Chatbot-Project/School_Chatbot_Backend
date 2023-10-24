@@ -34,9 +34,12 @@ def check_unread_messages(request):
 
             # 상담방에 참가한 학생의 최신 ConsultResult가 안 읽은 상태면 True (새 상담 결과 있음)
             student_id = consult_room.student
-            consult_result = ConsultResult.objects.filter(member_id=student_id).latest('result_time') 
-            if consult_result and not consult_result.is_read:
-                has_new_consult_result = True
+            try:
+                consult_result = ConsultResult.objects.filter(member_id=student_id).latest('result_time') 
+                if consult_result and not consult_result.is_read:
+                    has_new_consult_result = True
+            except ConsultResult.DoesNotExist:
+                has_new_consult_result = False
             
         return JsonResponse({'is_unread': is_unread, 'has_new_result': has_new_consult_result})   # is_unread=True 면 안 읽은 메시지 있음
         

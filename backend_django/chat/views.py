@@ -172,7 +172,7 @@ def chat_result(request, user_id, chatroom_id):
             summary = data.get('summary')
             wordcloud = data.get('wordcloud')
             print("wordcloud : ", wordcloud)
-            img_url = wordcloud.split('\\')[-2] + '/' + wordcloud.split('\\')[-1]
+            img_url = wordcloud.split('/')[-2] + '/' + wordcloud.split('/')[-1]
             categories = data.get('category')
 
             # category_text = ', '.join([item[0] for item in categories])
