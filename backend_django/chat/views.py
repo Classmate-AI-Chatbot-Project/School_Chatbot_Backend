@@ -171,6 +171,7 @@ def chat_result(request, user_id, chatroom_id):
             emotion_count = data.get('emotion_count')
             summary = data.get('summary')
             wordcloud = data.get('wordcloud')
+            print("wordcloud : ", wordcloud)
             img_url = wordcloud.split('\\')[-2] + '/' + wordcloud.split('\\')[-1]
             categories = data.get('category')
 
