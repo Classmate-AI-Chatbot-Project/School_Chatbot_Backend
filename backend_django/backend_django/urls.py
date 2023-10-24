@@ -26,8 +26,6 @@ urlpatterns = [
     path('account/', include('account.urls')),
     path('teacher/', include('teacher.urls')),
     path('admin/', admin.site.urls),
-    # React 첫 화면 url 설정
-    path('', TemplateView.as_view(template_name='index.html')),  
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
