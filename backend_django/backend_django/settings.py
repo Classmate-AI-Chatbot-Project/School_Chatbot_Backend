@@ -186,7 +186,7 @@ DATABASES = {
         }
     }
 
-'''
+
 
 # Running on production App Engine, so connect to Google Cloud SQL
 # using the unix socket at /cloudsql/<your-cloud-sql-connection string>
