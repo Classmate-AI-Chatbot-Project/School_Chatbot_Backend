@@ -92,9 +92,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://localhost:3000',
     'http://localhost:8080',
-    'http://34.64.189.164:3000',
-    'http://34.64.189.164:8000',
-    'http://schoollog.kro.kr/'
+    'http://schoollog.kro.kr'
 ]
 
 # cors 추가
@@ -105,9 +103,7 @@ CORS_ORIGIN_WHITELIST = (
     'http://localhost:8000',
     'http://localhost:3000',
     'http://localhost:8080',
-    'http://34.64.189.164:3000',
-    'http://34.64.189.164:8000',
-    'http://schoollog.kro.kr/')
+    'http://schoollog.kro.kr')
 
 CORS_ALLOW_ORIGINS = [
     'http://127.0.0.1:8000',
@@ -116,9 +112,7 @@ CORS_ALLOW_ORIGINS = [
     'http://localhost:8000',
     'http://localhost:3000',
     'http://localhost:8080',
-    'http://34.64.189.164:3000',
-    'http://34.64.189.164:8000',
-    'http://schoollog.kro.kr/'
+    'http://schoollog.kro.kr'
 ]
 
 CORS_ALLOW_HEADERS = (
@@ -181,18 +175,17 @@ AUTHENTICATION_BACKENDS = [
 # Running locally so connect to Cloud SQL via the proxy.
 # To start the proxy via command line: $ cloud-sql-proxy.exe schoollog-project:asia-northeast3:mysql-database
 # Cloud SQL 인증 프록시를 사용 중임을 나타내는 환경 변수 설정: set USE_CLOUD_SQL_AUTH_PROXY=true
-'''
-if os.getenv("USE_CLOUD_SQL_AUTH_PROXY", None):
-    DATABASES = {
+DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'schoollog_db',
-            'USER': 'admin',
+            'NAME': 'django_db',
+            'USER': 'root',
             'PASSWORD': '1234',
-            'HOST': '127.0.0.1',
+            'HOST': '34.22.67.152',
             'PORT': '3306',   # MySQL 기본 포트
         }
     }
+
 '''
 
 # Running on production App Engine, so connect to Google Cloud SQL
@@ -215,12 +208,15 @@ if os.getenv('GAE_APPLICATOIN', None):
 # DATABASES = my_settings.DATABASES
 '''
 # 기본 SQLITE3
+'''
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+'''
+
 
 
 # Password validation
