@@ -7,6 +7,13 @@ from torch.nn import CrossEntropyLoss, MSELoss
 from transformers import BertPreTrainedModel, BertConfig
 from collections import Counter
 
+current_directory = os.path.dirname(__file__)
+save_ckpt_path = os.path.join(current_directory, 'result_model', 'kobert', 'kobert.pth')
+    # save_ckpt_path = "./result_model/kobert/kobert.pth"
+
+    # 답변과 카테고리 불러오기
+
+
 
 kobert_config = {
     'attention_probs_dropout_prob': 0.1,
@@ -132,27 +139,21 @@ def kobert_input(tokenizer, str, device=None, max_seq_len=512):
     }
     return data
 
-def kobert_result(student_dialogs):
-    current_directory = os.path.dirname(__file__)
-    save_ckpt_path = os.path.join(current_directory, 'result_model', 'kobert', 'kobert.pth')
-    # save_ckpt_path = "./result_model/kobert/kobert.pth"
+category, emotion, depression = load_wellness_answer()
 
-    # 답변과 카테고리 불러오기
-    category, emotion, depression = load_wellness_answer()
-
-    ctx = "cuda" if torch.cuda.is_available() else "cpu"
-    device = torch.device(ctx)
+ctx = "cuda" if torch.cuda.is_available() else "cpu"
+device = torch.device(ctx)
 
     # 저장한 Checkpoint 불러오기
-    checkpoint = torch.load(save_ckpt_path, map_location=device)
+checkpoint = torch.load(save_ckpt_path, map_location=device)
+model = KoBERTforSequenceClassfication()
+model.load_state_dict(checkpoint['model_state_dict'], strict=False)
 
-    model = KoBERTforSequenceClassfication()
-    model.load_state_dict(checkpoint['model_state_dict'], strict=False)
+model.to(ctx)
+model.eval()
+tokenizer = get_tokenizer()
 
-    model.to(ctx)
-    model.eval()
-
-    tokenizer = get_tokenizer()
+def kobert_result(student_dialogs):
 
     category_count = defaultdict(int)
     emotion_count = defaultdict(int)

@@ -21,6 +21,7 @@ def load_model():
 model, tokenizer = load_model()
 
 # parameter 없는 요약문 생성
+'''
 def summary_no_para(text):
     inputs = tokenizer(text, truncation=True, padding="longest", return_tensors="pt")
     input_ids = inputs["input_ids"]
@@ -30,6 +31,8 @@ def summary_no_para(text):
     summary_text = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
 
     return summary_text
+'''
+
 
 
 # parameter 있는 요약문 생성
@@ -69,12 +72,8 @@ def generate_summary(text):
 
     for batch in batched_sentences:
         batch_input = ". ".join(batch)  # 배치 내의 문장들을 다시 합쳐서 입력으로 사용
-        summary1 = summary_para(batch_input)
-        summary2 = summary_no_para(batch_input)
-        if len(summary1) > len(summary2):
-            output = summary1
-        else:
-            output = summary2
+        output = summary_para(batch_input)
+
 
         # 긴 문장을 선택하여 요약문에 붙임
         summary_texts = summary_texts + output + '\n'
