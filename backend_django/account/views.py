@@ -173,7 +173,7 @@ class naver_login(APIView):
 
             # email, nickname, photo 가져옴
             email = user_data['response']['email']
-            nickname = user_data['response']['name']
+            nickname = user_data['response']['nickname']
             photo = user_data['response']['profile_image']
             token = jwt.encode({"email": email}, SECRET_KEY) #카톡 naver 자체 jwt token으로 변경해줌
 
