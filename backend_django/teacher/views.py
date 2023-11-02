@@ -18,6 +18,8 @@ from PIL import Image
 from io import BytesIO
 import base64
 
+import random, string
+
 @login_required           
 # 선생님의 학생 리스트
 def studentList(request):  
@@ -81,6 +83,11 @@ def resultDetail(request, chat_id):
 
         return JsonResponse(data)
 
+def random_string(length):
+    # 랜덤한 문자열 생성
+    letters = string.ascii_lowercase
+    return ''.join(random.choice(letters) for _ in range(length))
+
 @csrf_exempt
 def test(request):  
     if request.method == 'POST': # 특정 chat_id로 접근시, 해당 채팅방의 결과 세부정보 반환
@@ -95,10 +102,33 @@ def test(request):
         image = Image.open(BytesIO(image_data))
 
         # 이미지 처리 및 저장 (예: 미디어 디렉토리에 저장)
-        image.save('media/drawings/drawing.png', 'PNG')
+        file_name = f'drawings/{random_string(8)}.png'
 
-        return HttpResponse(status=status.HTTP_200_OK)
+        image.save(f'media/{file_name}', 'PNG')
 
+        image_path = f'media/{file_name}'
+
+        # 이미지 읽기
+        with open(image_path, 'rb') as ff:
+            content = ff.read()
+
+
+        # 객체 탐지 결과 얻기
+        project_id = 'tree-392720'
+        model_id = 'IOD139546717262446592'
+        prediction = get_prediction(content, project_id, model_id)
+        
+        # 결과 시각화 및 문구 출력
+        result_text = visualize_detection_results(prediction, image_path)
+
+        data = {
+            'img': f'/media/{file_name}',
+            'result':result_text
+        }
+
+        return JsonResponse(data)
+
+'''
 @csrf_exempt
 def test_result(request):  
     if request.method == 'GET': # 특정 chat_id로 접근시, 해당 채팅방의 결과 세부정보 반환
@@ -124,7 +154,7 @@ def test_result(request):
         }
 
         return JsonResponse(data)
-    
+'''
 def resultList(request):  
     user = request.user
     student_list = User.objects.filter(school_code=user.school_code, job=1)
